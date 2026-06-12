@@ -1,0 +1,6 @@
+string prompt
+bool uses_image
+sensor_msgs/Image img
+string output_fields_json
+---
+string gemini_response

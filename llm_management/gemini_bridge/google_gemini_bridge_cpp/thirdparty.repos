@@ -1,0 +1,10 @@
+repositories:
+  third_party/curlpp:
+    type: git
+    url: https://github.com/jpbarrette/curlpp.git
+    version: master
+
+  third_party/cpp-base64:
+    type: git
+    url: https://github.com/ReneNyffenegger/cpp-base64.git
+    version: master

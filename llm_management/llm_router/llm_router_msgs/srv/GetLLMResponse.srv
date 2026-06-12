@@ -1,0 +1,22 @@
+# --- PROMPT ---
+string prompt
+
+# --- IMAGE ---
+bool uses_image
+sensor_msgs/Image image
+
+# --- OUTPUT FORMAT ---
+string INT="int"
+string STRING="str"
+string FLOAT="float"
+string BOOL="bool"
+string INT_ARRAY="int-arr"
+string STRING_ARRAY="str-arr"
+string FLOAT_ARRAY="float-arr"
+string BOOL_ARRAY="boll-arr"
+
+# key: output field name, value: output value type
+type_description_interfaces/KeyValue[] output_fields
+---
+# All values will be strings, they must be parsed in the client node
+type_description_interfaces/KeyValue[] outputs
