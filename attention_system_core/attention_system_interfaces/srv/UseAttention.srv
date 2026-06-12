@@ -1,0 +1,28 @@
+string task_details
+
+string behavior_details
+
+# Available actuation capabilities
+bool can_turn_around
+bool can_move_around
+bool can_use_joint
+
+---
+# ...................................
+# Execution states (how the request was performed)
+# - SUCCESSFUL (an attention behavior was assigned to the actual behavior and is running)
+# - CANCELED (the request was canceled)
+# - ABORTED (the request was aborted)
+# - NO_ATTENTION_BEHAVIORS_AVAILABLE (there is no available attention behavior registered which needed
+#                                     actuation capabilities are satisfied with the available
+#                                     ones assigned in the request)
+# - UNKNOWN (unknown status)
+# ..................................
+int8 SUCCESSFUL = 0
+int8 CANCELED = 1
+int8 ABORTED = 2
+int8 NO_ATTENTION_BEHAVIORS_AVAILABLE = 3
+int8 UNKNOWN = 4
+
+int8 status
+string frame_id

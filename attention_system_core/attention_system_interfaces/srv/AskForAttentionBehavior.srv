@@ -1,0 +1,9 @@
+string task_details
+string context_details
+string behavior_details
+
+AttentionActionDetails[] attention_actions
+---
+bool success
+string message
+int8 attention_action_id

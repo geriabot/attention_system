@@ -1,0 +1,25 @@
+node_name: "attention_system_bt_node"
+
+orchestrator_type: "attention_orchestrator"
+
+package_name: "attention_system"
+
+orchestrator_libraries:
+  - "libattention_system.so"
+
+plugin_libraries:
+  - "libattention_system_behaviors_bt_plugins.so"
+
+behaviors:
+  - name: "attention_track_unknown_detection_rot"
+    behavior_file: "behavior_tree_xml/track_unknown_detection_rot.xml"
+    control_period_ms: 100
+    package_name: "attention_system_behaviors"
+  - name: "attention_track_detections_same_class_midpoint_rot"
+    behavior_file: "behavior_tree_xml/track_detections_same_class_midpoint_rot.xml"
+    control_period_ms: 100
+    package_name: "attention_system_behaviors"
+  - name: "attention_track_joint_art"
+    behavior_file: "behavior_tree_xml/track_joint_art.xml"
+    control_period_ms: 100
+    package_name: "attention_system_behaviors"

@@ -1,0 +1,9 @@
+string task_details
+string context_details
+string behavior_details
+AttentionActionDetails attention_action
+string additional_information
+---
+bool success
+string message
+string[] inputs

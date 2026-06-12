@@ -1,0 +1,101 @@
+/attention_orchestrator:
+  ros__parameters:
+    context_details: [
+      "For behavior input class request: visual detection class values must be short English object labels.",
+      "For behavior input class request: prefer common object categories such as COCO/LVIS-style labels: person, car, chair, bottle, backpack.",
+      "For behavior input class request: use visual attributes only when needed to disambiguate the target, and keep them compact: red car, blue cup, person with red shirt.",
+      "For behavior input class request: do not use non-visual roles, actions, identities, or relations as detection classes, such as owner, speaker, friend, student, patient, looking at me, next to the table.",
+      "For behavior input class request: do not include ids, counts, articles, explanations, punctuation, or field names in visual class inputs.",
+      "For behavior input class request: when tracking several detections of the same class, use the shared base object class rather than a uniquely described instance.",
+      "For behavior input class request: prefer simple object labels, but use compact relational labels such as person on horse only when the task requires selecting a specific object among similar objects."
+    ]
+    
+    actuation_capabilities: ["turn_around", "move_around", "use_joint"]
+
+    attention_behaviors:
+      behaviors: ["TrackUnknownDetectionRot", "TrackDetectionsSameClassMidpointRot", "TrackJointArt"]
+
+      TrackUnknownDetectionRot:
+        behavior_id: 0
+        actuation_capabilities_needed:
+          turn_around:
+            needed: true
+            alternatives: [""]
+          move_around:
+            needed: false
+            alternatives: [""]
+          use_joint:
+            needed: false
+            alternatives: [""]
+        prompt_information:
+          explanation: "The robot tracks one visual detectection (classified by id and class), using its whole body, so the robot is always faced to the detection."
+          inputs: ["<int>id", "<string>class"]
+        bt_blackboard_inputs:
+          not_assigned: ["det_id", "det_class"]
+          assigned: [
+            "det_prompt_topic:omdet_prompt",
+            "det_frame_id:attention_point_1",
+            "retry_attempts:<int>5"
+          ]
+        node_name: "attention_track_unknown_detection_rot" # Should be the same to the one assigned in attention_behaviors_config.yaml
+
+      TrackDetectionsSameClassMidpointRot:
+        behavior_id: 1
+        actuation_capabilities_needed:
+          turn_around:
+            needed: true
+            alternatives: [""]
+          move_around:
+            needed: false
+            alternatives: [""]
+          use_joint:
+            needed: false
+            alternatives: [""]
+        prompt_information:
+          explanation: "The robot tracks an specific number of visual detections classified by class, so the robot is always faced to the midpoint of all detections."
+          inputs: ["<string>class", "<int>n_detections"]
+        bt_blackboard_inputs:
+          not_assigned: ["det_class", "n_detections"]
+          assigned: [
+            "det_prompt_topic:omdet_prompt",
+            "det_frame_id:attention_point_1",
+            "retry_attempts:<int>5",
+            "right_scan_speed:<double>-0.3",
+            "left_scan_speed:<double>0.3",
+            "go_back_speed:<double>-0.1",
+            "go_forward_speed:<double>0.1",
+            "publish_twist_topic:/cmd_vel",
+            "limit_percentage_scan:<double>30.0",
+            "limit_percentage_go_back:<double>40.0",
+            "lateral_limit_percentage_clustering:<double>40.0",
+            "cluster_area_percentage:<double>16.0",
+            "max_scans:<int>3",
+            "robot_reference_frame:base_link",
+            "fixed_reference_frame:odom",
+            "move_back_limit_dist:<double>0.7"
+          ]
+        node_name: "attention_track_detections_same_class_midpoint_rot"
+
+      TrackJointArt:
+        behavior_id: 2
+        actuation_capabilities_needed:
+          turn_around:
+            needed: false
+            alternatives: [""]
+          move_around:
+            needed: false
+            alternatives: [""]
+          use_joint:
+            needed: true
+            alternatives: [""]
+        prompt_information:
+          explanation: "The goal is for the robot itself to try to maintain continuous visual contact with one of its own joints while performing the task."
+          inputs: ["<string>joint_frame"]
+        bt_blackboard_inputs:
+          not_assigned: ["joint_frame"]
+          assigned: [
+            "camera_control_joint_frame:Head",
+            "robot_reference_frame:base_link",
+            "retry_attempts:<int>5"
+          ]
+        node_name: "attention_track_joint_art"
