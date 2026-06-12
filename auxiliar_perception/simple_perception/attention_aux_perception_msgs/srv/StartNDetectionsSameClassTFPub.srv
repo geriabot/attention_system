@@ -1,0 +1,6 @@
+string frame_id
+
+int8 n_detections
+string class_name
+---
+bool success

@@ -1,0 +1,6 @@
+string frame_id
+
+string id
+string class_name
+---
+bool success
