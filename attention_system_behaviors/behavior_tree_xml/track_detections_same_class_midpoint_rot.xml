@@ -1,0 +1,351 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4"
+      main_tree_to_execute="TrackDetectionsSameClassMidpointRot">
+  <BehaviorTree ID="TrackDetectionsSameClassMidpointRot">
+    <Sequence>
+      <RequestBehaviorInputIntelligence task_details="{req_task_details}"
+                                        context_details="{req_context_details}"
+                                        behavior_details="{req_behavior_details}"
+                                        action_explanation="{req_action_explanation}"
+                                        inputs="{req_inputs}"
+                                        blackboard_inputs="{req_blackboard_inputs}"
+                                        blackboard_inputs_to_ask="det_class:n_detections"
+                                        needs_img_for_input_request="false"
+                                        additional_information=""/>
+      <ChangeVisualDetectionClass class="{det_class}"
+                                  service_name="/omdet_prompt"/>
+      <RetryUntilSuccessful num_attempts="{retry_attempts}">
+        <RequestNDetectionsSameClassTrackPoint class="{det_class}"
+                                               N="{n_detections}"
+                                               frame_id="{det_frame_id}"/>
+      </RetryUntilSuccessful>
+      <RetryUntilSuccessful num_attempts="{retry_attempts}">
+        <StartTrackTF frame_id="{det_frame_id}"/>
+      </RetryUntilSuccessful>
+      <Script code="scans_performed:=0"/>
+      <Script code="tracking_activated:=true"/>
+      <Script code="must_deactivate_tracking:=false"/>
+      <Sleep msec="1000"/>
+      <Parallel failure_count="1"
+                success_count="3">
+        <RetryUntilSuccessful num_attempts="{retry_attempts}">
+          <PublishRobotOutOfBoundsReferenceTF robot_reference_frame="{robot_reference_frame}"
+                                              fixed_reference_frame="{fixed_reference_frame}"/>
+        </RetryUntilSuccessful>
+        <TriggerDeactivationService service_name="/stop_n_detections_same_class_tf_publisher"
+                                    when_halted="true"/>
+        <ClearVisualDetectionClass service_name="/omdet_prompt"
+                                   when_halted="true"/>
+        <TriggerDeactivationService service_name="/stop_tf_tracking"
+                                    when_halted="true"/>
+        <KeepRunningUntilFailure>
+          <ReactiveSequence>
+            <Fallback>
+              <ScriptCondition code="must_deactivate_tracking == false"/>
+              <Sequence>
+                <SubTree ID="TrackingDeactivation"
+                         _autoremap="true"/>
+                <Script code="must_deactivate_tracking:=false"/>
+              </Sequence>
+            </Fallback>
+            <Sequence>
+              <Fallback>
+                <Sequence>
+                  <ScriptCondition code="n_detections &lt;= 0"/>
+                  <Script code="n_det_satisfied:=true"/>
+                </Sequence>
+                <ReactiveSequence>
+                  <RetryUntilSuccessful num_attempts="30">
+                    <Inverter>
+                      <No3dDetectionsSameClassExist class="{det_class}"/>
+                    </Inverter>
+                  </RetryUntilSuccessful>
+                  <Script code="n_det_satisfied:=false"/>
+                  <ReactiveFallback>
+                    <Sequence>
+                      <N3dDetectionsSameClassExist n_detections="{n_detections}"
+                                                   class="{det_class}"/>
+                      <Script code="n_det_satisfied:=true"/>
+                      <Script code="scans_performed:=0"/>
+                    </Sequence>
+                    <Sequence>
+                      <ScriptCondition code="scans_performed &lt;= max_scans"/>
+                      <Script code="must_deactivate_tracking:=true"/>
+                      <Sequence>
+                        <ReactiveFallback>
+                          <DetectionNearSightLimit side="left"
+                                                   class="{det_class}"
+                                                   limit_percentage="{limit_percentage_scan}"/>
+                          <PublishTwist lin_x="0.0"
+                                        lin_y="0.0"
+                                        lin_z="0.0"
+                                        ang_x="0.0"
+                                        ang_y="0.0"
+                                        ang_z="{right_scan_speed}"
+                                        publish_twist_topic="{publish_twist_topic}"/>
+                        </ReactiveFallback>
+                        <ReactiveFallback>
+                          <DetectionNearSightLimit side="right"
+                                                   class="{det_class}"
+                                                   limit_percentage="{limit_percentage_scan}"/>
+                          <PublishTwist lin_x="0.0"
+                                        lin_y="0.0"
+                                        lin_z="0.0"
+                                        ang_x="0.0"
+                                        ang_y="0.0"
+                                        ang_z="{left_scan_speed}"
+                                        publish_twist_topic="{publish_twist_topic}"/>
+                        </ReactiveFallback>
+                        <Script code="scans_performed+= 1"/>
+                      </Sequence>
+                    </Sequence>
+                  </ReactiveFallback>
+                </ReactiveSequence>
+              </Fallback>
+              <IfThenElse>
+                <ScriptCondition code="n_det_satisfied == true"/>
+                <Sequence>
+                  <IfThenElse>
+                    <Sequence>
+                      <ScriptCondition code="can_move_around == true"/>
+                      <Inverter>
+                        <IsRobotOutOfBounds move_back_limit_dist="{move_back_limit_dist}"
+                                            robot_reference_frame="{robot_reference_frame}"
+                                            fixed_reference_frame="{fixed_reference_frame}"/>
+                      </Inverter>
+                    </Sequence>
+                    <ReactiveSequence>
+                      <ReactiveFallback>
+                        <Fallback>
+                          <Inverter>
+                            <Sequence>
+                              <DetectionNearSightLimit side="right"
+                                                       class="{det_class}"
+                                                       limit_percentage="{limit_percentage_go_back}"/>
+                              <DetectionNearSightLimit side="left"
+                                                       class="{det_class}"
+                                                       limit_percentage="{limit_percentage_go_back}"/>
+                            </Sequence>
+                          </Inverter>
+                          <ForceFailure>
+                            <Script code="must_deactivate_tracking:=true"/>
+                          </ForceFailure>
+                        </Fallback>
+                        <ReactiveFallback>
+                          <IsRobotOutOfBounds move_back_limit_dist="{move_back_limit_dist}"
+                                              robot_reference_frame="{robot_reference_frame}"
+                                              fixed_reference_frame="{fixed_reference_frame}"/>
+                          <PublishTwist lin_x="{go_back_speed}"
+                                        lin_y="0.0"
+                                        lin_z="0.0"
+                                        ang_x="0.0"
+                                        ang_y="0.0"
+                                        ang_z="0.0"
+                                        publish_twist_topic="{publish_twist_topic}"/>
+                        </ReactiveFallback>
+                      </ReactiveFallback>
+                      <ReactiveFallback>
+                        <Fallback>
+                          <Inverter>
+                            <Sequence>
+                              <Inverter>
+                                <DetectionNearSightLimit side="right"
+                                                         class="{det_class}"
+                                                         limit_percentage="{lateral_limit_percentage_clustering}"/>
+                              </Inverter>
+                              <Inverter>
+                                <DetectionNearSightLimit side="left"
+                                                         class="{det_class}"
+                                                         limit_percentage="{lateral_limit_percentage_clustering}"/>
+                              </Inverter>
+                              <TrackedDetectionsClustered class="{det_class}"
+                                                          max_area_percentage="{cluster_area_percentage}"/>
+                            </Sequence>
+                          </Inverter>
+                          <ForceFailure>
+                            <Script code="must_deactivate_tracking:=true"/>
+                          </ForceFailure>
+                        </Fallback>
+                        <ReactiveFallback>
+                          <IsRobotOutOfBounds move_back_limit_dist="{move_back_limit_dist}"
+                                              robot_reference_frame="{robot_reference_frame}"
+                                              fixed_reference_frame="{fixed_reference_frame}"/>
+                          <PublishTwist lin_x="{go_forward_speed}"
+                                        lin_y="0.0"
+                                        lin_z="0.0"
+                                        ang_x="0.0"
+                                        ang_y="0.0"
+                                        ang_z="0.0"
+                                        publish_twist_topic="{publish_twist_topic}"/>
+                        </ReactiveFallback>
+                      </ReactiveFallback>
+                    </ReactiveSequence>
+                    <AlwaysSuccess/>
+                  </IfThenElse>
+                  <SubTree ID="TrackingActivation"
+                           _autoremap="true"/>
+                  <Script code="must_deactivate_tracking:=false"/>
+                </Sequence>
+                <AlwaysSuccess/>
+              </IfThenElse>
+            </Sequence>
+          </ReactiveSequence>
+        </KeepRunningUntilFailure>
+      </Parallel>
+    </Sequence>
+  </BehaviorTree>
+
+  <BehaviorTree ID="TrackingActivation">
+    <Fallback>
+      <ScriptCondition code="tracking_activated == true"/>
+      <Sequence>
+        <StartTrackTF frame_id="{det_frame_id}"/>
+        <Script code="tracking_activated:=true"/>
+      </Sequence>
+    </Fallback>
+  </BehaviorTree>
+
+  <BehaviorTree ID="TrackingDeactivation">
+    <Fallback>
+      <ScriptCondition code="tracking_activated == false"/>
+      <Sequence>
+        <RetryUntilSuccessful num_attempts="{retry_attempts}">
+          <TriggerDeactivationService service_name="/stop_tf_tracking"
+                                      when_halted="false"/>
+        </RetryUntilSuccessful>
+        <Script code="tracking_activated:=false"/>
+      </Sequence>
+    </Fallback>
+  </BehaviorTree>
+
+  <!-- Description of Node Models (used by Groot) -->
+  <TreeNodesModel>
+    <Action ID="ChangeVisualDetectionClass"
+            editable="true">
+      <input_port name="class"
+                  type="std::string"/>
+      <input_port name="service_name"
+                  type="std::string"/>
+    </Action>
+    <Action ID="ClearVisualDetectionClass"
+            editable="true">
+      <input_port name="service_name"
+                  type="std::string"/>
+      <input_port name="when_halted"
+                  type="bool"/>
+    </Action>
+    <Condition ID="DetectionNearSightLimit"
+               editable="true">
+      <input_port name="side"
+                  type="std::string">Values: right or left</input_port>
+      <input_port name="class"
+                  type="std::string"/>
+      <input_port name="limit_percentage"
+                  type="double"/>
+    </Condition>
+    <Condition ID="IsRobotOutOfBounds"
+               editable="true">
+      <input_port name="move_back_limit_dist"
+                  type="double"/>
+      <input_port name="robot_reference_frame"
+                  type="std::string"/>
+      <input_port name="fixed_reference_frame"
+                  type="std::string"/>
+    </Condition>
+    <Condition ID="N3dDetectionsSameClassExist"
+               editable="true">
+      <input_port name="n_detections"
+                  type="int"/>
+      <input_port name="class"
+                  type="std::string"/>
+    </Condition>
+    <Condition ID="No3dDetectionsSameClassExist"
+               editable="true">
+      <input_port name="class"
+                  type="std::string"/>
+    </Condition>
+    <Action ID="PublishRobotOutOfBoundsReferenceTF"
+            editable="true">
+      <input_port name="robot_reference_frame"
+                  type="std::string"/>
+      <input_port name="fixed_reference_frame"
+                  type="std::string"/>
+    </Action>
+    <Action ID="PublishTwist"
+            editable="true">
+      <input_port name="lin_x"
+                  default="0.0"
+                  type="double"/>
+      <input_port name="lin_y"
+                  default="0.0"
+                  type="double"/>
+      <input_port name="lin_z"
+                  default="0.0"
+                  type="double"/>
+      <input_port name="ang_x"
+                  default="0.0"
+                  type="double"/>
+      <input_port name="ang_y"
+                  default="0.0"
+                  type="double"/>
+      <input_port name="ang_z"
+                  default="0.0"
+                  type="double"/>
+      <input_port name="publish_twist_topic"
+                  type="std::string"/>
+    </Action>
+    <Action ID="RequestBehaviorInputIntelligence"
+            editable="true">
+      <input_port name="task_details"
+                  type="std::string"/>
+      <input_port name="context_details"
+                  type="std::string"/>
+      <input_port name="behavior_details"
+                  type="std::string"/>
+      <input_port name="action_explanation"
+                  type="std::string"/>
+      <input_port name="inputs"
+                  type="std::string"/>
+      <input_port name="blackboard_inputs"
+                  type="std::string"/>
+      <input_port name="blackboard_inputs_to_ask"
+                  type="std::string"/>
+      <input_port name="needs_img_for_input_request"
+                  type="bool"/>
+      <input_port name="additional_information"
+                  type="std::string"/>
+    </Action>
+    <Action ID="RequestNDetectionsSameClassTrackPoint"
+            editable="true">
+      <input_port name="class"
+                  default="{det_class}"
+                  type="std::string"/>
+      <input_port name="N"
+                  default="{n_detections}"
+                  type="int"/>
+      <input_port name="frame_id"
+                  default="{det_frame_id}"
+                  type="std::string"/>
+    </Action>
+    <Action ID="StartTrackTF"
+            editable="true">
+      <input_port name="frame_id"
+                  type="std::string"/>
+    </Action>
+    <Condition ID="TrackedDetectionsClustered"
+               editable="true">
+      <input_port name="class"
+                  type="std::string"/>
+      <input_port name="max_area_percentage"
+                  type="double"/>
+    </Condition>
+    <Action ID="TriggerDeactivationService"
+            editable="true">
+      <input_port name="service_name"
+                  type="std::string"/>
+      <input_port name="when_halted"
+                  type="bool"/>
+    </Action>
+  </TreeNodesModel>
+
+</root>

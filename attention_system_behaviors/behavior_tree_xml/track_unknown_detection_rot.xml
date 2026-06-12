@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+  <BehaviorTree ID="TrackUnknownDetectionRot">
+    <Sequence>
+      <RequestBehaviorInputIntelligence task_details="{req_task_details}"
+                                        context_details="{req_context_details}"
+                                        behavior_details="{req_behavior_details}"
+                                        action_explanation="{req_action_explanation}"
+                                        inputs="{req_inputs}"
+                                        blackboard_inputs="{req_blackboard_inputs}"
+                                        blackboard_inputs_to_ask="det_class"
+                                        needs_img_for_input_request="false"
+                                        additional_information=""/>
+      <ChangeVisualDetectionClass class="{det_class}"
+                                  service_name="/omdet_prompt"/>
+      <Sleep msec="500"/>
+      <GetDetections2DInformation out_string="{additional_info}"/>
+      <RequestBehaviorInputIntelligence task_details="{req_task_details}"
+                                        context_details="{req_context_details}"
+                                        behavior_details="{req_behavior_details}"
+                                        action_explanation="{req_action_explanation}"
+                                        inputs="{req_inputs}"
+                                        blackboard_inputs="{req_blackboard_inputs}"
+                                        blackboard_inputs_to_ask="det_id"
+                                        needs_img_for_input_request="true"
+                                        additional_information="{additional_info}"/>
+      <RetryUntilSuccessful num_attempts="{retry_attempts}">
+        <RequestSingleDetectionTrackPoint class="{det_class}"
+                                          id="{det_id}"
+                                          frame_id="{det_frame_id}"/>
+      </RetryUntilSuccessful>
+      <RetryUntilSuccessful num_attempts="{retry_attempts}">
+        <StartTrackTF frame_id="{det_frame_id}"/>
+      </RetryUntilSuccessful>
+      <Parallel failure_count="1"
+                success_count="3">
+        <KeepRunningUntilFailure>
+          <RetryUntilSuccessful num_attempts="30">
+            <DetectionExists class="{det_class}"
+                             id="{det_id}"/>
+          </RetryUntilSuccessful>
+        </KeepRunningUntilFailure>
+        <TriggerDeactivationService service_name="/stop_single_detection_tf_publisher"
+                                    when_halted="True"/>
+        <ClearVisualDetectionClass service_name="/omdet_prompt"
+                                   when_halted="True"/>
+        <TriggerDeactivationService service_name="/stop_tf_tracking"
+                                    when_halted="True"/>
+      </Parallel>
+    </Sequence>
+  </BehaviorTree>
+
+  <!-- Description of Node Models (used by Groot) -->
+  <TreeNodesModel>
+    <Action ID="ChangeVisualDetectionClass"
+            editable="true">
+      <input_port name="class"
+                  type="std::string"/>
+      <input_port name="service_name"
+                  type="std::string"/>
+    </Action>
+    <Action ID="ClearVisualDetectionClass"
+            editable="true">
+      <input_port name="service_name"
+                  type="std::string"/>
+      <input_port name="when_halted"
+                  type="bool"/>
+    </Action>
+    <Condition ID="DetectionExists"
+               editable="true">
+      <input_port name="class"
+                  type="std::string"/>
+      <input_port name="id"
+                  type="std::string"/>
+    </Condition>
+    <Action ID="GetDetections2DInformation"
+            editable="true">
+      <output_port name="out_string"
+                   type="std::string"/>
+    </Action>
+    <Action ID="RequestBehaviorInputIntelligence"
+            editable="true">
+      <input_port name="task_details"
+                  type="std::string"/>
+      <input_port name="context_details"
+                  type="std::string"/>
+      <input_port name="behavior_details"
+                  type="std::string"/>
+      <input_port name="action_explanation"
+                  type="std::string"/>
+      <input_port name="inputs"
+                  type="std::string"/>
+      <input_port name="blackboard_inputs"
+                  type="std::string"/>
+      <input_port name="blackboard_inputs_to_ask"
+                  type="std::string"/>
+      <input_port name="needs_img_for_input_request"
+                  type="bool"/>
+      <input_port name="additional_information"
+                  type="std::string"/>
+    </Action>
+    <Action ID="RequestSingleDetectionTrackPoint"
+            editable="true">
+      <input_port name="class"
+                  default="{det_class}"
+                  type="std::string"/>
+      <input_port name="id"
+                  default="{det_id}"
+                  type="int"/>
+      <input_port name="frame_id"
+                  type="std::string"/>
+    </Action>
+    <Action ID="StartTrackTF"
+            editable="true">
+      <input_port name="frame_id"
+                  type="std::string"/>
+    </Action>
+    <Action ID="TriggerDeactivationService"
+            editable="true">
+      <input_port name="service_name"
+                  type="std::string"/>
+      <input_port name="when_halted"
+                  type="bool"/>
+    </Action>
+  </TreeNodesModel>
+
+</root>

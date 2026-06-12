@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+  <BehaviorTree ID="TrackJointArt">
+    <Sequence>
+      <GetTFCompactTreeInformation root_frame="{robot_reference_frame}"
+                                   max_depth="8"
+                                   max_frames="80"
+                                   timeout_sec="1.0"
+                                   out_string="{additional_info}"/>
+      <RequestBehaviorInputIntelligence task_details="{req_task_details}"
+                                        context_details="{req_context_details}"
+                                        behavior_details="{req_behavior_details}"
+                                        action_explanation="{req_action_explanation}"
+                                        inputs="{req_inputs}"
+                                        blackboard_inputs="{req_blackboard_inputs}"
+                                        blackboard_inputs_to_ask="joint_frame"
+                                        needs_img_for_input_request="false"
+                                        additional_information="{additional_info}"/>
+      <TFExists target_frame="{robot_reference_frame}"
+                source_frame="{joint_frame}"
+                expected_exists="true"
+                timeout_sec="0.5"/>
+      <JointTrackingKinematicallyFeasible root_frame="{robot_reference_frame}"
+                                          camera_control_joint_frame="{camera_control_joint_frame}"
+                                          target_joint_frame="{joint_frame}"/>
+      <RetryUntilSuccessful num_attempts="{retry_attempts}">
+        <StartTrackTF frame_id="{joint_frame}"/>
+      </RetryUntilSuccessful>
+      <TriggerDeactivationService service_name="/stop_tf_tracking"
+                                  when_halted="true"/>
+    </Sequence>
+  </BehaviorTree>
+
+  <!-- Description of Node Models (used by Groot) -->
+  <TreeNodesModel>
+    <Action ID="GetTFCompactTreeInformation"
+            editable="true">
+      <input_port name="root_frame"
+                  type="std::string"/>
+      <input_port name="max_depth"
+                  default="8"
+                  type="int"/>
+      <input_port name="max_frames"
+                  default="80"
+                  type="int"/>
+      <input_port name="timeout_sec"
+                  default="1.0"
+                  type="double"/>
+      <output_port name="out_string"
+                   type="std::string"/>
+    </Action>
+    <Condition ID="JointTrackingKinematicallyFeasible"
+               editable="true">
+      <input_port name="root_frame"
+                  type="std::string"/>
+      <input_port name="camera_control_joint_frame"
+                  type="std::string"/>
+      <input_port name="target_joint_frame"
+                  type="std::string"/>
+    </Condition>
+    <Action ID="RequestBehaviorInputIntelligence"
+            editable="true">
+      <input_port name="task_details"
+                  type="std::string"/>
+      <input_port name="context_details"
+                  type="std::string"/>
+      <input_port name="behavior_details"
+                  type="std::string"/>
+      <input_port name="action_explanation"
+                  type="std::string"/>
+      <input_port name="inputs"
+                  type="std::string"/>
+      <input_port name="blackboard_inputs"
+                  type="std::string"/>
+      <input_port name="blackboard_inputs_to_ask"
+                  type="std::string"/>
+      <input_port name="needs_img_for_input_request"
+                  type="bool"/>
+      <input_port name="additional_information"
+                  type="std::string"/>
+    </Action>
+    <Action ID="StartTrackTF"
+            editable="true">
+      <input_port name="frame_id"
+                  type="std::string"/>
+    </Action>
+    <Condition ID="TFExists"
+               editable="true">
+      <input_port name="target_frame"
+                  type="std::string"/>
+      <input_port name="source_frame"
+                  type="std::string"/>
+      <input_port name="expected_exists"
+                  type="bool"/>
+      <input_port name="timeout_sec"
+                  type="double"/>
+    </Condition>
+    <Action ID="TriggerDeactivationService"
+            editable="true">
+      <input_port name="service_name"
+                  type="std::string"/>
+      <input_port name="when_halted"
+                  type="bool"/>
+    </Action>
+  </TreeNodesModel>
+
+</root>
