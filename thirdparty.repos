@@ -1,0 +1,23 @@
+repositories:
+  third_party/llama_ros:
+    type: git
+    url: https://github.com/mgonzs13/llama_ros.git
+    version: main
+
+  # attention_system
+  third_party/behavior_architecture:
+    type: git
+    url: https://github.com/geriabot/behavior_architecture.git
+    version: main
+  
+  # kobuki_attention_actuation
+  third_party/kobuki:
+    type: git
+    url: https://github.com/IntelligentRoboticsLabs/kobuki.git
+    version: jazzy
+  
+  # nao_attention_actuation
+  third_party/nao_lola:
+    type: git
+    url: https://github.com/geriabot/nao_lola.git
+    version: rolling
