@@ -48,7 +48,6 @@ include_directories(include)
 add_library(change_visual_detection_class_bt_node SHARED src/attention_system_behaviors/ChangeVisualDetectionClass.cpp)
 add_library(clear_visual_detection_class_bt_node SHARED src/attention_system_behaviors/ClearVisualDetectionClass.cpp)
 add_library(detection_exists_bt_node SHARED src/attention_system_behaviors/DetectionExists.cpp)
-add_library(detection_near_sight_center_bt_node SHARED src/attention_system_behaviors/DetectionNearSightCenter.cpp)
 add_library(detection_near_sight_limit_bt_node SHARED src/attention_system_behaviors/DetectionNearSightLimit.cpp)
 add_library(tracked_detections_clustered_bt_node SHARED src/attention_system_behaviors/TrackedDetectionsClustered.cpp)
 add_library(get_detections_2d_information_bt_node SHARED src/attention_system_behaviors/GetDetections2DInformation.cpp)
@@ -60,7 +59,6 @@ add_library(no_3d_detections_same_class_exist_bt_node SHARED src/attention_syste
 add_library(publish_robot_out_of_bounds_reference_tf_bt_node SHARED src/attention_system_behaviors/PublishRobotOutOfBoundsReferenceTF.cpp)
 add_library(start_track_tf_bt_node SHARED src/attention_system_behaviors/StartTrackTF.cpp)
 add_library(tf_exists_bt_node SHARED src/attention_system_behaviors/TFExists.cpp)
-add_library(activate_twisting_bt_node SHARED src/attention_system_behaviors/ActivateTwisting.cpp)
 add_library(publish_twist_bt_node SHARED src/attention_system_behaviors/PublishTwist.cpp)
 add_library(request_behavior_input_intelligence_bt_node SHARED src/attention_system_behaviors/RequestBehaviorInputIntelligence.cpp)
 add_library(genetate_single_detection_track_point_bt_node SHARED src/attention_system_behaviors/RequestSingleDetectionTrackPoint.cpp)
@@ -73,7 +71,6 @@ add_library(${PROJECT_NAME}_bt_plugins SHARED
   src/attention_system_behaviors/ChangeVisualDetectionClass.cpp
   src/attention_system_behaviors/ClearVisualDetectionClass.cpp
   src/attention_system_behaviors/DetectionExists.cpp
-  src/attention_system_behaviors/DetectionNearSightCenter.cpp
   src/attention_system_behaviors/DetectionNearSightLimit.cpp
   src/attention_system_behaviors/TrackedDetectionsClustered.cpp
   src/attention_system_behaviors/GetDetections2DInformation.cpp
@@ -85,7 +82,6 @@ add_library(${PROJECT_NAME}_bt_plugins SHARED
   src/attention_system_behaviors/PublishRobotOutOfBoundsReferenceTF.cpp
   src/attention_system_behaviors/StartTrackTF.cpp
   src/attention_system_behaviors/TFExists.cpp
-  src/attention_system_behaviors/ActivateTwisting.cpp
   src/attention_system_behaviors/PublishTwist.cpp
   src/attention_system_behaviors/RequestBehaviorInputIntelligence.cpp
   src/attention_system_behaviors/RequestSingleDetectionTrackPoint.cpp
@@ -103,7 +99,6 @@ list(APPEND plugin_libs
   change_visual_detection_class_bt_node
   clear_visual_detection_class_bt_node
   detection_exists_bt_node
-  detection_near_sight_center_bt_node
   detection_near_sight_limit_bt_node
   tracked_detections_clustered_bt_node
   get_detections_2d_information_bt_node
@@ -115,7 +110,6 @@ list(APPEND plugin_libs
   publish_robot_out_of_bounds_reference_tf_bt_node
   start_track_tf_bt_node
   tf_exists_bt_node
-  activate_twisting_bt_node
   publish_twist_bt_node
   request_behavior_input_intelligence_bt_node
   genetate_single_detection_track_point_bt_node
@@ -130,25 +124,9 @@ foreach(bt_plugin ${plugin_libs})
 endforeach()
 # ...
 
-add_executable(track_unknown_detection_rot_test src/track_unknown_detection_rot_test.cpp)
-ament_target_dependencies(track_unknown_detection_rot_test ${dependencies})
-
-add_executable(track_detection_example_test src/track_detection_example_test.cpp)
-ament_target_dependencies(track_detection_example_test ${dependencies})
-
-add_executable(track_detections_same_class_midpoint_rot_test src/track_detections_same_class_test.cpp)
-ament_target_dependencies(track_detections_same_class_midpoint_rot_test ${dependencies})
-
-add_executable(track_joint_art_test src/track_joint_art_test.cpp)
-ament_target_dependencies(track_joint_art_test ${dependencies})
-
 install(TARGETS
   ${PROJECT_NAME}_bt_plugins
   ${plugin_libs}
-  track_unknown_detection_rot_test
-  track_detections_same_class_midpoint_rot_test
-  track_detection_example_test
-  track_joint_art_test
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME}
