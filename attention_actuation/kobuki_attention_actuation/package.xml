@@ -14,8 +14,6 @@
   <exec_depend>launch_ros</exec_depend>
 
   <depend>geometry_msgs</depend>
-  <depend>nao_lola_command_msgs</depend>
-  <depend>nao_lola_sensor_msgs</depend>
   <depend>std_msgs</depend>
   <depend>std_srvs</depend>
   <depend>rclcpp</depend>

@@ -4,7 +4,7 @@
   <name>google_gemini_bridge_cpp</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
-  <maintainer email="s.cobosb.2022@alumnos.urjc.es">scobosb</maintainer>
+  <maintainer email="dev.scobosb@gmail.com">dev-scobosb</mantainer>
   <license>TODO: License declaration</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>

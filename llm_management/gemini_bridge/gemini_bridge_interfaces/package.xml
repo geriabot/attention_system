@@ -4,7 +4,7 @@
   <name>gemini_bridge_interfaces</name>
   <version>0.0.0</version>
   <description>Interfaces for ROS2 and Gemini API bridge</description>
-  <maintainer email="s.cobosb.2022@alumnos.urjc.es">scobosb</maintainer>
+  <maintainer email="dev.scobosb@gmail.com">dev-scobosb</mantainer>
   <license>TODO: License declaration</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>

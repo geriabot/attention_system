@@ -8,8 +8,6 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(geometry_msgs REQUIRED)
-find_package(nao_lola_command_msgs REQUIRED)
-find_package(nao_lola_sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(tf2 REQUIRED)
@@ -23,8 +21,6 @@ set(CMAKE_CXX_STANDARD 17)
 
 set(dependencies
   geometry_msgs
-  nao_lola_command_msgs
-  nao_lola_sensor_msgs
   rclcpp
   rclcpp_action
   std_msgs
