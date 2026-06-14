@@ -63,11 +63,18 @@ The repository is organized into five main blocks: the core attention system, th
 
 The current behavior catalogue is loaded from `attention_system_core/attention_system/config/attention_orchestrator_params.yaml`.
 
-| Behavior | Behavior runner | Required capabilities | MLLM inputs | Purpose |
-| -------- | --------------- | ------------------- | ----------- | ------- |
-| `TrackUnknownDetectionRot` | `attention_track_unknown_detection_rot` | `turn_around` | `<int>id`, `<string>class` | Track one visual detection by class and id while rotating the robot/body toward it. |
-| `TrackDetectionsSameClassMidpointRot` | `attention_track_detections_same_class_midpoint_rot` | `turn_around` | `<string>class`, `<int>n_detections` | Track the midpoint of several detections of the same visual class. |
-| `TrackJointArt` | `attention_track_joint_art` | `use_joint` | `<string>joint_frame` | Track one robot joint frame when the robot should maintain visual contact with part of itself. |
+- `TrackUnknownDetectionRot`: tracks one visual detection by class and id while rotating the robot/body toward it.
+  - Behavior runner: `attention_track_unknown_detection_rot`
+  - Required capabilities: `turn_around`
+  - MLLM inputs: `<int>id`, `<string>class`
+- `TrackDetectionsSameClassMidpointRot`: tracks the midpoint of several detections of the same visual class.
+  - Behavior runner: `attention_track_detections_same_class_midpoint_rot`
+  - Required capabilities: `turn_around`
+  - MLLM inputs: `<string>class`, `<int>n_detections`
+- `TrackJointArt`: tracks one robot joint frame when the robot should maintain visual contact with part of itself.
+  - Behavior runner: `attention_track_joint_art`
+  - Required capabilities: `use_joint`
+  - MLLM inputs: `<string>joint_frame`
 
 ## Usage
 
