@@ -24,7 +24,6 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'ask_llm_router = llm_router.ask_llm_router:main',
             'llm_router = llm_router.llm_router:main',
         ],
     },
