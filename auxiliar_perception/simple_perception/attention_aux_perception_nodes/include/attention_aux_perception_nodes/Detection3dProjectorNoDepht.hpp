@@ -49,6 +49,7 @@ private:
   double centroid_marker_color_g_;
   double centroid_marker_color_b_;
   double centroid_marker_color_a_;
+  bool publish_optical_coordinates_;
   int previous_marker_count_;
 };
 

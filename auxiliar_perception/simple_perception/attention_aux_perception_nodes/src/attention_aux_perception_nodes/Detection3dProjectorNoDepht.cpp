@@ -18,6 +18,7 @@ Detection3dProjectorNoDepht::Detection3dProjectorNoDepht(
   centroid_marker_color_g_(1.0),
   centroid_marker_color_b_(0.0),
   centroid_marker_color_a_(1.0),
+  publish_optical_coordinates_(false),
   previous_marker_count_(0)
 {
   this->declare_parameter<std::string>("centroid_marker_topic", "detection_centroid_markers");
@@ -27,6 +28,7 @@ Detection3dProjectorNoDepht::Detection3dProjectorNoDepht(
   this->declare_parameter<double>("centroid_marker_color_g", 1.0);
   this->declare_parameter<double>("centroid_marker_color_b", 0.0);
   this->declare_parameter<double>("centroid_marker_color_a", 1.0);
+  this->declare_parameter<bool>("publish_optical_coordinates", false);
 
   this->get_parameter("centroid_marker_topic", centroid_marker_topic_);
   this->get_parameter("centroid_marker_namespace", centroid_marker_namespace_);
@@ -35,13 +37,15 @@ Detection3dProjectorNoDepht::Detection3dProjectorNoDepht(
   this->get_parameter("centroid_marker_color_g", centroid_marker_color_g_);
   this->get_parameter("centroid_marker_color_b", centroid_marker_color_b_);
   this->get_parameter("centroid_marker_color_a", centroid_marker_color_a_);
+  this->get_parameter("publish_optical_coordinates", publish_optical_coordinates_);
 
   det3d_pub_ = this->create_publisher<vision_msgs::msg::Detection3DArray>(
     "detections_3d", 10);
   centroid_marker_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>(
     centroid_marker_topic_, 10);
 
-  auto cam_info_qos = rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable();
+  //auto cam_info_qos = rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable();
+  auto cam_info_qos = rclcpp::QoS(rclcpp::KeepLast(1)).durability_volatile().reliable();
 
   cam_info_sub_ = this->create_subscription<sensor_msgs::msg::CameraInfo>(
     "camera_info", cam_info_qos,
@@ -147,6 +151,15 @@ Detection3dProjectorNoDepht::detections_callback(
     const double optical_x_meters = normalized_x * z_meters;
     const double optical_y_meters = normalized_y * z_meters;
     const double optical_z_meters = z_meters;
+    double detection_x_meters = optical_z_meters;
+    double detection_y_meters = -optical_x_meters;
+    double detection_z_meters = -optical_y_meters;
+
+    if (publish_optical_coordinates_) {
+      detection_x_meters = optical_x_meters;
+      detection_y_meters = optical_y_meters;
+      detection_z_meters = optical_z_meters;
+    }
 
     vision_msgs::msg::Detection3D det3d;
     det3d.header = msg->header;
@@ -156,15 +169,15 @@ Detection3dProjectorNoDepht::detections_callback(
     hypothesis.hypothesis.class_id = det2d.results.front().hypothesis.class_id;
     hypothesis.hypothesis.score = det2d.results.front().hypothesis.score;
 
-    hypothesis.pose.pose.position.x = optical_x_meters;
-    hypothesis.pose.pose.position.y = optical_y_meters;
-    hypothesis.pose.pose.position.z = optical_z_meters;
+    hypothesis.pose.pose.position.x = detection_x_meters;
+    hypothesis.pose.pose.position.y = detection_y_meters;
+    hypothesis.pose.pose.position.z = detection_z_meters;
 
     det3d.results.push_back(hypothesis);
 
-    det3d.bbox.center.position.x = optical_x_meters;
-    det3d.bbox.center.position.y = optical_y_meters;
-    det3d.bbox.center.position.z = optical_z_meters;
+    det3d.bbox.center.position.x = detection_x_meters;
+    det3d.bbox.center.position.y = detection_y_meters;
+    det3d.bbox.center.position.z = detection_z_meters;
 
     det3d.bbox.size.x = (det2d.bbox.size_x / fx_) * z_meters;
     det3d.bbox.size.y = (det2d.bbox.size_y / fy_) * z_meters;
@@ -174,9 +187,9 @@ Detection3dProjectorNoDepht::detections_callback(
     centroid_markers.markers.push_back(create_centroid_marker(
       msg->header,
       marker_id,
-      optical_x_meters,
-      optical_y_meters,
-      optical_z_meters));
+      detection_x_meters,
+      detection_y_meters,
+      detection_z_meters));
     marker_id++;
   }
 
