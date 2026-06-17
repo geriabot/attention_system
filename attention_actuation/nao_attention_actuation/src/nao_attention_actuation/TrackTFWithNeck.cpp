@@ -21,20 +21,25 @@ TrackTFWithNeck::TrackTFWithNeck()
 {
   this->declare_parameter("head_frame_id", "Head");
   this->declare_parameter("yaw_kp", 0.1);
-  this->declare_parameter("pitch_kp", 0.1);
+  this->declare_parameter("pitch_kp", 0.15);
+  this->declare_parameter("yaw_kd", 0.0);
+  this->declare_parameter("pitch_kd", 0.04);
   this->declare_parameter("max_yaw_delta_per_tick", 0.2);
-  this->declare_parameter("max_pitch_delta_per_tick", 0.2);
-  this->declare_parameter("yaw_deadband", 0.01);
-  this->declare_parameter("pitch_deadband", 0.01);
+  this->declare_parameter("max_pitch_delta_per_tick", 0.12);
+  this->declare_parameter("yaw_deadband", 0.0);
+  this->declare_parameter("pitch_deadband", 0.0);
   this->declare_parameter("min_head_yaw", -1.0);
   this->declare_parameter("max_head_yaw", 1.0);
   this->declare_parameter("min_head_pitch", -0.5);
   this->declare_parameter("max_head_pitch", 0.3);
+  this->declare_parameter("target_timeout_ms", 500);
   this->declare_parameter("publish_test_traces", false);
 
   this->get_parameter("head_frame_id", head_frame_id_);
   this->get_parameter("yaw_kp", yaw_kp_);
   this->get_parameter("pitch_kp", pitch_kp_);
+  this->get_parameter("yaw_kd", yaw_kd_);
+  this->get_parameter("pitch_kd", pitch_kd_);
   this->get_parameter("max_yaw_delta_per_tick", max_yaw_delta_per_tick_);
   this->get_parameter("max_pitch_delta_per_tick", max_pitch_delta_per_tick_);
   this->get_parameter("yaw_deadband", yaw_deadband_);
@@ -43,13 +48,17 @@ TrackTFWithNeck::TrackTFWithNeck()
   this->get_parameter("max_head_yaw", max_head_yaw_);
   this->get_parameter("min_head_pitch", min_head_pitch_);
   this->get_parameter("max_head_pitch", max_head_pitch_);
+  this->get_parameter("target_timeout_ms", target_timeout_ms_);
   this->get_parameter("publish_test_traces", publish_test_traces_);
 
   current_head_yaw_ = 0.0;
   current_head_pitch_ = 0.0;
   commanded_head_yaw_ = 0.0;
   commanded_head_pitch_ = 0.0;
+  previous_yaw_error_ = 0.0;
+  previous_pitch_error_ = 0.0;
   has_joint_positions_ = false;
+  has_previous_target_error_ = false;
 
   tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
@@ -102,6 +111,8 @@ TrackTFWithNeck::start_cb(
     100ms,
     std::bind(&TrackTFWithNeck::tracking_timer_cb, this));
 
+  reset_target_error_state();
+
   if (has_joint_positions_) {
     commanded_head_yaw_ = current_head_yaw_;
     commanded_head_pitch_ = current_head_pitch_;
@@ -129,6 +140,7 @@ TrackTFWithNeck::stop_cb(
   }
 
   frame_id_.clear();
+  reset_target_error_state();
 
   RCLCPP_INFO(this->get_logger(), "[TRACK TF WITH NECK] Stop service initiated");
 
@@ -173,26 +185,68 @@ TrackTFWithNeck::tracking_timer_cb()
       head_frame_id_.c_str(),
       frame_id_.c_str(),
       ex.what());
+    reset_target_error_state();
     return;
+  }
+
+  const rclcpp::Time target_stamp(transform_stamped.header.stamp);
+  if (target_timeout_ms_ > 0 && target_stamp.nanoseconds() > 0) {
+    const auto target_timeout_nanoseconds =
+      std::chrono::duration_cast<std::chrono::nanoseconds>(
+      std::chrono::milliseconds(target_timeout_ms_));
+    const rclcpp::Duration target_timeout =
+      rclcpp::Duration::from_nanoseconds(target_timeout_nanoseconds.count());
+    const rclcpp::Duration target_age = this->now() - target_stamp;
+
+    if (target_age > target_timeout) {
+      RCLCPP_WARN_THROTTLE(
+        this->get_logger(),
+        *this->get_clock(),
+        1000,
+        "[TRACK TF WITH NECK] Target TF is stale. Keeping current head position");
+      reset_target_error_state();
+      return;
+    }
   }
 
   const double x = transform_stamped.transform.translation.x;
   const double y = transform_stamped.transform.translation.y;
   const double z = transform_stamped.transform.translation.z;
+
+  if (!std::isfinite(x) || !std::isfinite(y) || !std::isfinite(z)) {
+    RCLCPP_WARN_THROTTLE(
+      this->get_logger(),
+      *this->get_clock(),
+      1000,
+      "[TRACK TF WITH NECK] Target TF contains invalid coordinates. Keeping current head position");
+    reset_target_error_state();
+    return;
+  }
+
   const double yaw_error = std::atan2(y, x);
   const double pitch_error = std::atan2(-z, std::sqrt((x * x) + (y * y)));
   // The TF gives the angular correction still needed from the current head frame.
   const double yaw_delta = compute_incremental_delta(
     yaw_error,
+    previous_yaw_error_,
+    has_previous_target_error_,
     yaw_kp_,
+    yaw_kd_,
     max_yaw_delta_per_tick_,
     yaw_deadband_);
 
   const double pitch_delta = compute_incremental_delta(
     pitch_error,
+    previous_pitch_error_,
+    has_previous_target_error_,
     pitch_kp_,
+    pitch_kd_,
     max_pitch_delta_per_tick_,
     pitch_deadband_);
+
+  previous_yaw_error_ = yaw_error;
+  previous_pitch_error_ = pitch_error;
+  has_previous_target_error_ = true;
 
   const double target_head_yaw = std::clamp(
     // current_head_yaw_ (+) --> left
@@ -250,22 +304,43 @@ TrackTFWithNeck::tracking_timer_cb()
     target_head_pitch);
 }
 
+void
+TrackTFWithNeck::reset_target_error_state()
+{
+  previous_yaw_error_ = 0.0;
+  previous_pitch_error_ = 0.0;
+  has_previous_target_error_ = false;
+}
+
 double
 TrackTFWithNeck::compute_incremental_delta(
   double target_angle,
+  double previous_target_angle,
+  bool has_previous_target_angle,
   double proportional_gain,
+  double derivative_gain,
   double max_delta_per_tick,
   double deadband) const
 {
+  if (!std::isfinite(target_angle)) {
+    return 0.0;
+  }
+
   // Ignore tiny corrections to avoid jitter around the target.
   if (std::abs(target_angle) <= deadband) {
     return 0.0;
   }
 
+  double derivative_delta = 0.0;
+  if (has_previous_target_angle) {
+    derivative_delta = derivative_gain * (target_angle - previous_target_angle);
+  }
+
   const double proportional_delta = proportional_gain * target_angle;
+  const double control_delta = proportional_delta + derivative_delta;
   // Bound each iteration so the neck motion remains progressive.
   const double limited_delta = std::clamp(
-    proportional_delta,
+    control_delta,
     -max_delta_per_tick,
     max_delta_per_tick);
 

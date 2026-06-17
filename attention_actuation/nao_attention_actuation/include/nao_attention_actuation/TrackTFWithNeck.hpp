@@ -28,6 +28,8 @@ private:
   std::string head_frame_id_;
   double yaw_kp_;
   double pitch_kp_;
+  double yaw_kd_;
+  double pitch_kd_;
   double max_yaw_delta_per_tick_;
   double max_pitch_delta_per_tick_;
   double yaw_deadband_;
@@ -36,12 +38,16 @@ private:
   double max_head_yaw_;
   double min_head_pitch_;
   double max_head_pitch_;
+  int target_timeout_ms_;
   double current_head_yaw_;
   double current_head_pitch_;
   double commanded_head_yaw_;
   double commanded_head_pitch_;
+  double previous_yaw_error_;
+  double previous_pitch_error_;
   bool publish_test_traces_;
   bool has_joint_positions_;
+  bool has_previous_target_error_;
 
   rclcpp::Service<attention_actuation_msgs::srv::StartTracking>::SharedPtr
     start_tracking_srv_;
@@ -72,10 +78,15 @@ private:
 
   void tracking_timer_cb();
 
+  void reset_target_error_state();
+
   double
   compute_incremental_delta(
     double target_angle,
+    double previous_target_angle,
+    bool has_previous_target_angle,
     double proportional_gain,
+    double derivative_gain,
     double max_delta_per_tick,
     double deadband) const;
 };

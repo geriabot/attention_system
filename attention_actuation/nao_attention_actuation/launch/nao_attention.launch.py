@@ -18,8 +18,18 @@ def generate_launch_description():
   )
   track_pitch_kp_arg = DeclareLaunchArgument(
     'track_pitch_kp',
-    default_value='0.1',
+    default_value='0.15',
     description='Pitch proportional gain for the TF tracking node'
+  )
+  track_yaw_kd_arg = DeclareLaunchArgument(
+    'track_yaw_kd',
+    default_value='0.0',
+    description='Yaw derivative gain for the TF tracking node'
+  )
+  track_pitch_kd_arg = DeclareLaunchArgument(
+    'track_pitch_kd',
+    default_value='0.04',
+    description='Pitch derivative gain for the TF tracking node'
   )
   track_max_yaw_delta_per_tick_arg = DeclareLaunchArgument(
     'track_max_yaw_delta_per_tick',
@@ -28,17 +38,17 @@ def generate_launch_description():
   )
   track_max_pitch_delta_per_tick_arg = DeclareLaunchArgument(
     'track_max_pitch_delta_per_tick',
-    default_value='0.2',
+    default_value='0.12',
     description='Maximum pitch correction per tick for the TF tracking node'
   )
   track_yaw_deadband_arg = DeclareLaunchArgument(
     'track_yaw_deadband',
-    default_value='0.01',
+    default_value='0.0',
     description='Yaw deadband for the TF tracking node'
   )
   track_pitch_deadband_arg = DeclareLaunchArgument(
     'track_pitch_deadband',
-    default_value='0.01',
+    default_value='0.0',
     description='Pitch deadband for the TF tracking node'
   )
   track_min_head_yaw_arg = DeclareLaunchArgument(
@@ -60,6 +70,11 @@ def generate_launch_description():
     'track_max_head_pitch',
     default_value='0.3',
     description='Maximum head pitch for the TF tracking node'
+  )
+  track_target_timeout_ms_arg = DeclareLaunchArgument(
+    'track_target_timeout_ms',
+    default_value='500',
+    description='Maximum target TF age in milliseconds for the TF tracking node'
   )
   track_publish_test_traces_arg = DeclareLaunchArgument(
     'track_publish_test_traces',
@@ -136,6 +151,8 @@ def generate_launch_description():
       'head_frame_id': LaunchConfiguration('track_head_frame_id'),
       'yaw_kp': ParameterValue(LaunchConfiguration('track_yaw_kp'), value_type=float),
       'pitch_kp': ParameterValue(LaunchConfiguration('track_pitch_kp'), value_type=float),
+      'yaw_kd': ParameterValue(LaunchConfiguration('track_yaw_kd'), value_type=float),
+      'pitch_kd': ParameterValue(LaunchConfiguration('track_pitch_kd'), value_type=float),
       'max_yaw_delta_per_tick': ParameterValue(
         LaunchConfiguration('track_max_yaw_delta_per_tick'),
         value_type=float),
@@ -148,6 +165,9 @@ def generate_launch_description():
       'max_head_yaw': ParameterValue(LaunchConfiguration('track_max_head_yaw'), value_type=float),
       'min_head_pitch': ParameterValue(LaunchConfiguration('track_min_head_pitch'), value_type=float),
       'max_head_pitch': ParameterValue(LaunchConfiguration('track_max_head_pitch'), value_type=float),
+      'target_timeout_ms': ParameterValue(
+        LaunchConfiguration('track_target_timeout_ms'),
+        value_type=int),
       'publish_test_traces': ParameterValue(
         LaunchConfiguration('track_publish_test_traces'),
         value_type=bool)
@@ -186,6 +206,8 @@ def generate_launch_description():
     track_head_frame_id_arg,
     track_yaw_kp_arg,
     track_pitch_kp_arg,
+    track_yaw_kd_arg,
+    track_pitch_kd_arg,
     track_max_yaw_delta_per_tick_arg,
     track_max_pitch_delta_per_tick_arg,
     track_yaw_deadband_arg,
@@ -194,6 +216,7 @@ def generate_launch_description():
     track_max_head_yaw_arg,
     track_min_head_pitch_arg,
     track_max_head_pitch_arg,
+    track_target_timeout_ms_arg,
     track_publish_test_traces_arg,
     body_reference_frame_arg,
     body_base_frame_id_arg,
