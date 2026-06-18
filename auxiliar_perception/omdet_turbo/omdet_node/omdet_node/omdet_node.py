@@ -504,8 +504,18 @@ class OmdetNode(LifecycleNode):
 
         x0, y0 = int(cx - w/2), int(cy - h/2)
         x1, y1 = int(cx + w/2), int(cy + h/2)
+        center_x = int(round(cx))
+        center_y = int(round(cy))
 
         cv2.rectangle(image, (x0, y0), (x1, y1), (0, 0, 255), 2)
+        cv2.circle(image, (center_x, center_y), 4, (0, 255, 0), -1)
+        cv2.drawMarker(
+          image,
+          (center_x, center_y),
+          (0, 255, 0),
+          markerType=cv2.MARKER_CROSS,
+          markerSize=12,
+          thickness=2)
         class_id = det.results[0].hypothesis.class_id
         score = det.results[0].hypothesis.score
         label = f"{class_id} ({det.id}) {score:.2f}"
