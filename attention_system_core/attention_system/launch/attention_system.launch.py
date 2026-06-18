@@ -7,15 +7,29 @@ from launch_ros.actions import Node
 
 def generate_launch_description():    
   use_sim_time = LaunchConfiguration('use_sim_time')
+  config_file = LaunchConfiguration('config_file')
+  params_file = LaunchConfiguration('params_file')
   pkg_dir = get_package_share_directory('attention_system')
 
-  config_file = os.path.join(pkg_dir, 'config', 'attention_behaviors_config.yaml')
-  params_file = os.path.join(pkg_dir, 'config', 'attention_orchestrator_params.yaml')
+  default_config_file = os.path.join(pkg_dir, 'config', 'attention_behaviors_config.yaml')
+  default_params_file = os.path.join(pkg_dir, 'config', 'attention_orchestrator_params.yaml')
 
   use_sim_time_arg = DeclareLaunchArgument(
     'use_sim_time',
     default_value='false',
     description='Use simulation time'
+  )
+
+  config_file_arg = DeclareLaunchArgument(
+    'config_file',
+    default_value=default_config_file,
+    description='Behavior architecture configuration file'
+  )
+
+  params_file_arg = DeclareLaunchArgument(
+    'params_file',
+    default_value=default_params_file,
+    description='Attention orchestrator parameters file'
   )
 
   action_executor_node = Node(
@@ -46,6 +60,8 @@ def generate_launch_description():
 
   return LaunchDescription([
     use_sim_time_arg,
+    config_file_arg,
+    params_file_arg,
     action_executor_node,
     attention_subsystems_node
   ])
