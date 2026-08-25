@@ -7,6 +7,10 @@ This repository contains the ROS 2 packages developed for an autonomous attentio
 
 ![attention_system_architecture](./media/attention_system_architecture.png)
 
+### Author
+
+Developed by Sergio Cobos Blanco ([dev-scobosb](https://github.com/dev-scobosb)).
+
 ## Additional documentation
 
 - [Academic documentation](#academic-documentation): final degree thesis (TFG) and WAF26 paper related to this system.
@@ -478,7 +482,3 @@ This repository is the result of a final degree thesis focused on designing and 
 
 **Title:** *An Autonomous Attention System for Social Robots Based on Multimodal Reasoning and Behavior Trees*  
 **Status:** Accepted and to be presented at WAF26 ([you can find the paper in this list](https://waf26.unex.es/wp-content/uploads/2026/08/WAF2026_Proceedings_Final.pdf)).
-
-## Author
-
-Developed by Sergio Cobos Blanco.
