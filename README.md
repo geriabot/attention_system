@@ -7,11 +7,12 @@ This repository contains the ROS 2 packages developed for an autonomous attentio
 
 ![attention_system_architecture](./media/attention_system_architecture.png)
 
-## Documentation index
+## Additional documentation
 
-- [docs/ROS_INTERFACES.md](docs/ROS_INTERFACES.md): public ROS nodes, services, topics and actions exposed by the system.
-- [docs/ADDING_ATTENTION_BEHAVIORS.md](docs/ADDING_ATTENTION_BEHAVIORS.md): checklist for adding a new attention behavior.
-- [docs/VALIDATION_AND_TROUBLESHOOTING.md](docs/VALIDATION_AND_TROUBLESHOOTING.md): validation commands and common runtime issues.
+- [Academic documentation](#academic-documentation): final degree thesis (TFG) and WAF26 paper related to this system.
+- [ROS_INTERFACES.md](docs/guides/ROS_INTERFACES.md): public ROS nodes, services, topics and actions exposed by the system.
+- [ADDING_ATTENTION_BEHAVIORS.md](docs/guides/ADDING_ATTENTION_BEHAVIORS.md): checklist for adding a new attention behavior.
+- [VALIDATION_AND_TROUBLESHOOTING.md](docs/guides/VALIDATION_AND_TROUBLESHOOTING.md): validation commands and common runtime issues.
 
 ## Contents
 
@@ -27,6 +28,7 @@ This repository contains the ROS 2 packages developed for an autonomous attentio
     - [Attention actuation](#attention-actuation)
     - [Auxiliary perception system](#auxiliary-perception-system)
 - [Troubleshooting](#troubleshooting)
+- [Academic documentation](#academic-documentation)
 
 ## Main features
 
@@ -40,6 +42,9 @@ This repository contains the ROS 2 packages developed for an autonomous attentio
 ## Repository structure
 
 The repository is organized into five main blocks: the core attention system, the attention behaviors, platform-specific actuation components, auxiliary perception components and MLLM management tools.
+
+<details>
+<summary>Show repository structure</summary>
 
 | Package                                                                | Description                                                                                                                                                                   |
 | ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -59,26 +64,48 @@ The repository is organized into five main blocks: the core attention system, th
 | `auxiliar_perception/simple_perception/attention_aux_perception_msgs`  | ROS 2 service interfaces used by the auxiliary perception nodes.                                                                                                              |
 | `auxiliar_perception/simple_perception/attention_aux_perception_nodes` | Auxiliary nodes that project 2D detections into 3D references and publish TFs associated with visual detections.                                                              |
 
+</details>
+
 ## Available attention behaviors
 
 The current behavior catalogue is loaded from `attention_system_core/attention_system/config/attention_orchestrator_params.yaml`.
 
-- `TrackUnknownDetectionRot`: tracks one visual detection by class and id while rotating the robot/body toward it.
-  - Behavior runner: `attention_track_unknown_detection_rot`
-  - Required capabilities: `turn_around`
-  - MLLM inputs: `<int>id`, `<string>class`
-- `TrackDetectionsSameClassMidpointRot`: tracks the midpoint of several detections of the same visual class.
-  - Behavior runner: `attention_track_detections_same_class_midpoint_rot`
-  - Required capabilities: `turn_around`
-  - MLLM inputs: `<string>class`, `<int>n_detections`
-- `TrackJointArt`: tracks one robot joint frame when the robot should maintain visual contact with part of itself.
-  - Behavior runner: `attention_track_joint_art`
-  - Required capabilities: `use_joint`
-  - MLLM inputs: `<string>joint_frame`
+<details>
+<summary><code>TrackUnknownDetectionRot</code></summary>
+
+Tracks one visual detection by class and id while rotating the robot/body toward it.
+- Behavior runner: `attention_track_unknown_detection_rot`
+- Required capabilities: `turn_around`
+- MLLM inputs: `<int>id`, `<string>class`
+
+</details>
+
+<details>
+<summary><code>TrackDetectionsSameClassMidpointRot</code></summary>
+
+Tracks the midpoint of several detections of the same visual class.
+- Behavior runner: `attention_track_detections_same_class_midpoint_rot`
+- Required capabilities: `turn_around`
+- MLLM inputs: `<string>class`, `<int>n_detections`
+
+</details>
+
+<details>
+<summary><code>TrackJointArt</code></summary>
+
+Tracks one robot joint frame when the robot should maintain visual contact with part of itself.
+- Behavior runner: `attention_track_joint_art`
+- Required capabilities: `use_joint`
+- MLLM inputs: `<string>joint_frame`
+
+</details>
 
 ## Usage
 
 ### Compilation
+
+<details>
+<summary>Show compilation instructions</summary>
 
 The following commands set up a ROS 2 Jazzy workspace for this repository, fetch the required dependencies, and build the packages included in the workspace. These instructions assume that ROS 2 Jazzy is already installed and properly configured.
 
@@ -123,7 +150,12 @@ colcon build --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 colcon build --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DGGML_CUDA=ON
 ```
 
+</details>
+
 ### Quick start
+
+<details>
+<summary>Show quick start guide</summary>
 
 Run each block in a different terminal. Source ROS 2 Jazzy and the workspace first in every terminal:
 ```sh
@@ -172,6 +204,8 @@ ros2 launch nao_attention_actuation nao_attention.launch.py
 ros2 launch attention_system attention_system.launch.py
 ```
 
+</details>
+
 ### Running the system
 
 In different terminals you should launch the different launchers depending on the selected MLLM backend, perception mode and robot platform.
@@ -200,7 +234,8 @@ The launcher starts the generic `behavior_architecture` `mission_executor` with 
 
 </details>
 
-##### Behavior Tree runtime configuration
+<details>
+<summary>Behavior Tree runtime configuration</summary>
 
 `config/attention_behaviors_config.yaml` is passed as the positional configuration file to `mission_executor`.
 
@@ -224,8 +259,6 @@ behaviors:
     package_name: "attention_system_behaviors"
 ```
 
-The main fields are:
-
 | Field | Meaning |
 | ----- | ------- |
 | `node_name` | Name of the shared ROS 2 node created by `mission_executor` and stored in the BehaviorTree.CPP blackboard as `node`. The custom BT nodes use this node to create ROS publishers, clients and other ROS interfaces. |
@@ -235,9 +268,12 @@ The main fields are:
 | `plugin_libraries` | Shared libraries that provide the custom BehaviorTree.CPP nodes used by the XML trees. |
 | `behaviors` | List of BehaviorRunner nodes to create. Each entry defines the runner name, XML file, control period and package that contains the XML. |
 
-When adding a new attention behavior, this file is where the new BehaviorRunner is registered and linked to its Behavior Tree XML file. See [docs/ADDING_ATTENTION_BEHAVIORS.md](docs/ADDING_ATTENTION_BEHAVIORS.md) for the complete checklist.
+When adding a new attention behavior, this file is where the new BehaviorRunner is registered and linked to its Behavior Tree XML file. See [docs/guides/ADDING_ATTENTION_BEHAVIORS.md](docs/guides/ADDING_ATTENTION_BEHAVIORS.md) for the complete checklist.
 
-##### Attention orchestrator configuration
+</details>
+
+<details>
+<summary>Attention orchestrator configuration</summary>
 
 `config/attention_orchestrator_params.yaml` is loaded as ROS 2 parameters for the `/attention_orchestrator` node created by `mission_executor`.
 
@@ -309,6 +345,8 @@ The `bt_blackboard_inputs` fields are:
 
 When adding a new attention behavior, this file is where the behavior is exposed to the selection logic, described for the MLLM and connected to the BehaviorRunner declared in `attention_behaviors_config.yaml`.
 
+</details>
+
 #### MLLM
 
 LLM router node (`/llm_router`):
@@ -323,11 +361,8 @@ export GOOGLE_GEMINI_API_KEY=<your_api_key>
 ros2 run google_gemini_bridge_cpp gemini_bridge_node --ros-args -p model:=gemini-2.5-flash-lite
 
 # For llama_ros local client
-# TODO: Add a validated local model YAML file path for this repository.
 ros2 llama launch <path_to_model_yaml_file>
 ```
-
-TODO: Document tested Gemini model names beyond the default `gemini-2.5-flash-lite`.
 
 #### Attention actuation
 
@@ -422,4 +457,28 @@ ros2 lifecycle set /omdet_node 3
 - If local MLLM inference is too slow, check whether CUDA support was enabled during `llama_ros` compilation.
 - If a Behavior Tree cannot be loaded, check that the plugin libraries are correctly built and sourced.
 - If no attention behavior is selected, check the available actuation capabilities and the behavior configuration file.
-- For runtime checks and common failures, see [docs/VALIDATION_AND_TROUBLESHOOTING.md](docs/VALIDATION_AND_TROUBLESHOOTING.md).
+- For runtime checks and common failures, see [docs/guides/VALIDATION_AND_TROUBLESHOOTING.md](docs/guides/VALIDATION_AND_TROUBLESHOOTING.md).
+
+## Academic documentation
+
+This repository is the result of a final degree thesis focused on designing and building an autonomous attention system for social robots.
+
+### Thesis
+
+**Title:** [Sistema Inteligente de Atención Autónoma para Robots Sociales](https://hdl.handle.net/10115/444617)  
+**Author:** Sergio Cobos Blanco  
+**Advisors:** Rodrigo Pérez Rodríguez and Juan Diego Peña Narváez  
+**Degree:** Bachelor's Degree in Software Robotics Engineering  
+**Institution:** Universidad Rey Juan Carlos  
+**Year:** 2026  
+**Language:** Spanish  
+**Description:** Final degree thesis document in which this attention system was developed.
+
+### Paper
+
+**Title:** *An Autonomous Attention System for Social Robots Based on Multimodal Reasoning and Behavior Trees*  
+**Status:** Accepted and to be presented at WAF26 ([you can find the paper in this list](https://waf26.unex.es/wp-content/uploads/2026/08/WAF2026_Proceedings_Final.pdf)).
+
+## Author
+
+Developed by Sergio Cobos Blanco.
