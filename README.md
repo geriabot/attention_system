@@ -33,6 +33,7 @@ Developed by Sergio Cobos Blanco ([dev-scobosb](https://github.com/dev-scobosb))
     - [Auxiliary perception system](#auxiliary-perception-system)
 - [Troubleshooting](#troubleshooting)
 - [Academic documentation](#academic-documentation)
+- [License](#license)
 
 ## Main features
 
@@ -482,3 +483,6 @@ This repository is the result of a final degree thesis focused on designing and 
 
 **Title:** *An Autonomous Attention System for Social Robots Based on Multimodal Reasoning and Behavior Trees*  
 **Status:** Accepted and to be presented at WAF26 ([you can find the paper in this list](https://waf26.unex.es/wp-content/uploads/2026/08/WAF2026_Proceedings_Final.pdf)).
+
+## License
+This project is licensed under the **Apache License 2.0**. See the [LICENSE](./LICENSE) file for details.
