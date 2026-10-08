@@ -258,7 +258,7 @@ class OmdetNode(LifecycleNode):
         detections = results[0]
         boxes, scores, text_labels = detections["boxes"], detections["scores"], detections["text_labels"]
 
-        detections_msg = self._generate_detections_msg(boxes, scores, text_labels, msg.header.frame_id)
+        detections_msg = self._generate_detections_msg(boxes, scores, text_labels, msg.header)
         
         if self._tracking:
           detections_msg = self._assign_id_with_tracker(cv_image, detections_msg)
@@ -285,10 +285,12 @@ class OmdetNode(LifecycleNode):
       self._detections_pub.publish(detections_msg)
     
 
-  def _generate_detections_msg(self, boxes, scores, text_labels, frame_id):
+  def _generate_detections_msg(self, boxes, scores, text_labels, image_header):
+    # Keep the image stamp: consumers need the camera pose at capture time to place
+    # the detections, and the inference takes long enough for the robot to move
     header = Header()
-    header.frame_id = frame_id
-    header.stamp = self.get_clock().now().to_msg()
+    header.frame_id = image_header.frame_id
+    header.stamp = image_header.stamp
 
     detections_msg = Detection2DArray()
     detections_msg.header = header

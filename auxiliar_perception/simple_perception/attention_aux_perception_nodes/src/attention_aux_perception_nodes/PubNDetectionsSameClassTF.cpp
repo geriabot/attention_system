@@ -395,8 +395,10 @@ PubNDetectionsSameClassTF::publish_detection_tf(std::string child_frame_id)
       tf_lookup_timeout,
       &error))
   {
+    // Camera pose when the image was captured, not the latest one: while the robot
+    // turns, the latest pose would shift the detection in the turning direction
     auto odom2cam_msg = tf_buffer_->lookupTransform(
-      "odom", optical_frame_id_, tf2::TimePointZero);
+      "odom", optical_frame_id_, detection_stamp);
 
     tf2::Stamped<tf2::Transform> odom2cam;
     tf2::fromMsg(odom2cam_msg, odom2cam);

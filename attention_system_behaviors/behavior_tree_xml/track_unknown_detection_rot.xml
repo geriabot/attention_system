@@ -13,8 +13,10 @@
                                         additional_information=""/>
       <ChangeVisualDetectionClass class="{det_class}"
                                   service_name="/omdet_prompt"/>
-      <Sleep msec="500"/>
-      <GetDetections2DInformation out_string="{additional_info}"/>
+      <GetDetections2DInformation class="{det_class}"
+                                  require_id="true"
+                                  timeout_ms="5000"
+                                  out_string="{additional_info}"/>
       <RequestBehaviorInputIntelligence task_details="{req_task_details}"
                                         context_details="{req_context_details}"
                                         behavior_details="{req_behavior_details}"
@@ -75,6 +77,14 @@
     </Condition>
     <Action ID="GetDetections2DInformation"
             editable="true">
+      <input_port name="class"
+                  type="std::string"/>
+      <input_port name="require_id"
+                  default="false"
+                  type="bool"/>
+      <input_port name="timeout_ms"
+                  default="5000"
+                  type="int"/>
       <output_port name="out_string"
                    type="std::string"/>
     </Action>

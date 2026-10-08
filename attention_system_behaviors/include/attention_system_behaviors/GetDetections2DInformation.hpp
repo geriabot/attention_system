@@ -1,6 +1,8 @@
 #ifndef ATTENTION_SYSTEM_BEHAVIORS__GET_DETECTIONS_2D_INFORMATION_HPP
 #define ATTENTION_SYSTEM_BEHAVIORS__GET_DETECTIONS_2D_INFORMATION_HPP
 
+#include <chrono>
+#include <mutex>
 #include <string>
 
 #include "behaviortree_cpp/behavior_tree.h"
@@ -28,7 +30,16 @@ public:
   {
     return BT::PortsList(
       {
-        BT::OutputPort<std::string>("out_string")
+        BT::OutputPort<std::string>("out_string"),
+        BT::InputPort<std::string>(
+          "class", "",
+          "Only report detections of this class (empty: any class)"),
+        BT::InputPort<bool>(
+          "require_id", false,
+          "Only report detections that already have a tracker id"),
+        BT::InputPort<int>(
+          "timeout_ms", 5000,
+          "Maximum time to wait for detections before failing")
       });
   }
 
@@ -38,9 +49,19 @@ private:
   rclcpp::Subscription<vision_msgs::msg::Detection2DArray>::SharedPtr
     detection_sub_;
 
+  // Written by the subscription (executor thread) and read by the tree tick
+  std::mutex detections_mutex_;
   vision_msgs::msg::Detection2DArray::SharedPtr last_detections_msg_;
 
-  std::string build_detections_information() const;
+  std::string class_filter_;
+  bool require_id_{false};
+  std::chrono::milliseconds timeout_{0};
+  std::chrono::steady_clock::time_point start_time_;
+
+  BT::NodeStatus check_detections();
+  std::string build_detections_information(
+    const vision_msgs::msg::Detection2DArray & detections_msg,
+    size_t & valid_detection_count) const;
   void detections_callback(
     const vision_msgs::msg::Detection2DArray::SharedPtr msg);
 

@@ -32,21 +32,23 @@ BT::NodeStatus
 GetDetections2DInformation::onStart()
 {
   publish_tree_tick(tree_tick_pub_, this->name());
-  if (!setOutput("out_string", build_detections_information())) {
-    RCLCPP_ERROR(
-      node_->get_logger(),
-      "Output port 'out_string' missing in XML.");
-    return BT::NodeStatus::FAILURE;
-  }
 
-  return BT::NodeStatus::SUCCESS;
+  getInput("class", class_filter_);
+  require_id_ = false;
+  getInput("require_id", require_id_);
+  int timeout_ms = 5000;
+  getInput("timeout_ms", timeout_ms);
+  timeout_ = std::chrono::milliseconds(timeout_ms);
+  start_time_ = std::chrono::steady_clock::now();
+
+  return check_detections();
 }
 
 BT::NodeStatus
 GetDetections2DInformation::onRunning()
 {
   publish_tree_tick(tree_tick_pub_, this->name());
-  return BT::NodeStatus::SUCCESS;
+  return check_detections();
 }
 
 void
@@ -54,27 +56,74 @@ GetDetections2DInformation::onHalted()
 {
 }
 
-std::string
-GetDetections2DInformation::build_detections_information() const
+BT::NodeStatus
+GetDetections2DInformation::check_detections()
 {
-  if (!last_detections_msg_ || last_detections_msg_->detections.empty()) {
-    return "";
+  // Wait until the detector publishes detections of the requested class: right
+  // after changing the detection prompt, OMDet needs some frames before reporting
+  // them, and the tracker some more (min_hits) before assigning them an id
+  vision_msgs::msg::Detection2DArray::SharedPtr detections_msg;
+  {
+    std::lock_guard<std::mutex> lock(detections_mutex_);
+    detections_msg = last_detections_msg_;
   }
 
-  std::ostringstream detections_information;
   size_t valid_detection_count = 0;
+  std::string detections_information;
+  if (detections_msg) {
+    detections_information =
+      build_detections_information(*detections_msg, valid_detection_count);
+  }
+
+  if (valid_detection_count > 0) {
+    if (!setOutput("out_string", detections_information)) {
+      RCLCPP_ERROR(
+        node_->get_logger(),
+        "Output port 'out_string' missing in XML.");
+      return BT::NodeStatus::FAILURE;
+    }
+    return BT::NodeStatus::SUCCESS;
+  }
+
+  if (std::chrono::steady_clock::now() - start_time_ >= timeout_) {
+    RCLCPP_ERROR(
+      node_->get_logger(),
+      "No detections%s%s%s received on %s in %ld ms",
+      require_id_ ? " with tracker id" : "",
+      class_filter_.empty() ? "" : " of class ",
+      class_filter_.c_str(),
+      DETECTION_TOPIC.c_str(),
+      static_cast<long>(timeout_.count()));
+    return BT::NodeStatus::FAILURE;
+  }
+
+  return BT::NodeStatus::RUNNING;
+}
+
+std::string
+GetDetections2DInformation::build_detections_information(
+  const vision_msgs::msg::Detection2DArray & detections_msg,
+  size_t & valid_detection_count) const
+{
+  std::ostringstream detections_information;
+  valid_detection_count = 0;
 
   detections_information << "Here is information about the actual detections in the image\n";
 
-  for (const auto & detection : last_detections_msg_->detections) {
-    RCLCPP_INFO(node_->get_logger(), "Id: %s", detection.id.c_str());
-
+  for (const auto & detection : detections_msg.detections) {
     if (detection.results.empty()) {
+      continue;
+    }
+    if (!class_filter_.empty() &&
+      detection.results.front().hypothesis.class_id != class_filter_)
+    {
+      continue;
+    }
+    if (require_id_ && detection.id.empty()) {
       continue;
     }
 
     valid_detection_count++;
-
     if (valid_detection_count > 1) {
       detections_information << "\n";
     }
@@ -96,6 +145,7 @@ void
 GetDetections2DInformation::detections_callback(
   const vision_msgs::msg::Detection2DArray::SharedPtr msg)
 {
+  std::lock_guard<std::mutex> lock(detections_mutex_);
   last_detections_msg_ = msg;
 }
 
