@@ -1,0 +1,157 @@
+# Reproducible ROS 2 Jazzy environment (RoboStack) to build and run attention_system
+# without a system-wide ROS installation. See "Option A: pixi" in README.md.
+#
+# The manifest lives in the repository, but the colcon workspace is two levels up
+# (<workspace>/src/attention_system), so the build tasks run there (cwd = "../..").
+#
+#   pixi run -e tb4 build     # or -e nao / -e kobuki
+#   pixi shell -e tb4         # shell with ROS 2 Jazzy and the robot dependencies
+
+[workspace]
+name = "attention_system"
+channels = ["robostack-jazzy", "conda-forge"]
+platforms = ["linux-64"]
+
+[dependencies]
+python = "3.12.*"
+ros-jazzy-desktop = "*"
+ros-jazzy-ros-base = "*"
+
+# Build tooling
+compilers = "*"
+cmake = "*"
+ninja = "*"
+make = "*"
+pkg-config = "*"
+colcon-common-extensions = "*"
+setuptools = "<80"  # >=80 breaks `setup.py develop` used by colcon --symlink-install
+rosdep = "*"
+vcstool = "*"
+ros-jazzy-ament-cmake-clang-format = "*"
+ros-jazzy-ament-clang-format = "*"
+
+# attention_system / behavior_architecture
+ros-jazzy-behaviortree-cpp = "*"
+ros-jazzy-rclcpp-cascade-lifecycle = "*"
+ros-jazzy-vision-msgs = "*"
+ros-jazzy-cv-bridge = "*"
+ros-jazzy-image-geometry = "*"
+ros-jazzy-message-filters = "*"
+ros-jazzy-tf2-geometry-msgs = "*"
+ros-jazzy-yaml-cpp-vendor = "*"
+ros-jazzy-nav2-msgs = "*"
+yaml-cpp = "*"
+opencv = "<5"  # boxmot requires opencv-python<5
+libcurl = "*"
+nlohmann_json = "*"
+libboost-devel = "*"
+requests = "*"
+pyyaml = "*"
+numpy = "*"  # requirements.txt pins 1.26.4, but RoboStack's ROS packages are built against numpy 2
+pydantic = "*"
+beautifulsoup4 = "*"
+
+# omdet_node: same versions as requirements.txt (numpy and opencv come from conda)
+[pypi-dependencies]
+torch = "==2.7.0"
+torchvision = "==0.22.0"
+transformers = "==4.56.2"
+timm = "==1.0.20"
+boxmot = "==16.0.11"
+
+[tasks.build]
+description = "Build the packages common to every robot (no actuation package)"
+cwd = "../.."
+cmd = """colcon build --symlink-install \
+  --packages-up-to attention_system attention_system_behaviors attention_perception_launchers \
+    llm_router google_gemini_bridge_cpp llama_bringup llama_cli \
+  --cmake-args \
+  -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+  -DPython3_EXECUTABLE=$CONDA_PREFIX/bin/python \
+  -DBUILD_TESTING=OFF"""
+
+# ---------------------------------------------------------------------------
+# Robot environments. Fetch the sources of the robot first: repos/<robot>.repos
+# ---------------------------------------------------------------------------
+
+[feature.tb4.dependencies]
+ros-jazzy-turtlebot4-simulator = "*"
+ros-jazzy-nav2-minimal-tb4-sim = "*"
+ros-jazzy-ros-gz = "*"
+ros-jazzy-teleop-twist-keyboard = "*"
+ros-jazzy-topic-tools = "*"
+
+[feature.tb4.tasks.build]
+description = "Build the common packages and tb4_attention_actuation"
+cwd = "../.."
+cmd = """colcon build --symlink-install \
+  --packages-up-to attention_system attention_system_behaviors attention_perception_launchers \
+    llm_router google_gemini_bridge_cpp llama_bringup llama_cli \
+    tb4_attention_actuation \
+  --cmake-args \
+  -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+  -DPython3_EXECUTABLE=$CONDA_PREFIX/bin/python \
+  -DBUILD_TESTING=OFF"""
+
+[feature.nao.dependencies]
+msgpack-cxx = "*"
+
+[feature.nao.tasks.build]
+description = "Build the common packages and nao_attention_actuation"
+cwd = "../.."
+cmd = """colcon build --symlink-install \
+  --packages-up-to attention_system attention_system_behaviors attention_perception_launchers \
+    llm_router google_gemini_bridge_cpp llama_bringup llama_cli \
+    nao_attention_actuation \
+  --cmake-args \
+  -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+  -DPython3_EXECUTABLE=$CONDA_PREFIX/bin/python \
+  -DBUILD_TESTING=OFF"""
+
+[feature.kobuki.dependencies]
+sophus = "==22.10"  # >=1.24 needs C++17 and ecl builds with C++14
+eigen = "*"
+ros-jazzy-angles = "*"
+ros-jazzy-camera-info-manager = "*"
+ros-jazzy-depth-image-proc = "*"
+ros-jazzy-image-transport = "*"
+ros-jazzy-diagnostic-updater = "*"
+ros-jazzy-joint-state-publisher = "*"
+ros-jazzy-xacro = "*"
+ros-jazzy-laser-filters = "*"
+ros-jazzy-navigation2 = "*"
+ros-jazzy-ros-gz = "*"
+ros-jazzy-topic-tools = "*"
+# ros_astra_camera
+ros-jazzy-image-publisher = "*"
+ros-jazzy-tf2-sensor-msgs = "*"
+ros-jazzy-tf2-eigen = "*"
+magic_enum = "<0.9.6"  # >=0.9.6 moved the header to magic_enum/magic_enum.hpp
+libuvc = "*"
+glog = "<0.7"  # 0.7 requires the glog::glog target; ros_astra_camera uses the old include style
+
+[feature.kobuki.tasks.setup-syslibs]
+description = "Expose the system libOpenNI2 (apt: libopenni2-dev, not on conda-forge) for openni2_camera"
+cmd = "mkdir -p .pixi/syslibs && ln -sf /usr/lib/x86_64-linux-gnu/libOpenNI2.so .pixi/syslibs/libOpenNI2.so"
+
+[feature.kobuki.tasks.build]
+description = "Build the common packages, kobuki_attention_actuation and the Kobuki bringup"
+cwd = "../.."
+cmd = """colcon build --symlink-install \
+  --packages-up-to attention_system attention_system_behaviors attention_perception_launchers \
+    llm_router google_gemini_bridge_cpp llama_bringup llama_cli \
+    kobuki_attention_actuation kobuki \
+  --cmake-args \
+  -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+  -DPython3_EXECUTABLE=$CONDA_PREFIX/bin/python \
+  -DBUILD_TESTING=OFF \
+  -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+  "-DCMAKE_SHARED_LINKER_FLAGS=-L$PIXI_PROJECT_ROOT/.pixi/syslibs -Wl,--allow-shlib-undefined" \
+  "-DCMAKE_EXE_LINKER_FLAGS=-L$PIXI_PROJECT_ROOT/.pixi/syslibs -Wl,--allow-shlib-undefined"
+"""
+depends-on = ["setup-syslibs"]
+
+[environments]
+tb4 = ["tb4"]
+nao = ["nao"]
+kobuki = ["kobuki"]

@@ -1,0 +1,53 @@
+# colcon workspace output (in case the repo is used as a workspace root)
+build/
+install/
+log/
+
+# Dependencies fetched with vcs (thirdparty.repos)
+third_party/
+llm_management/gemini_bridge/google_gemini_bridge_cpp/third_party/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# C/C++ build artifacts
+*.o
+*.a
+*.so
+*.so.*
+compile_commands.json
+CMakeCache.txt
+CMakeFiles/
+.cache/
+
+# Environments (pixi/conda)
+.pixi/
+
+# Model weights and downloaded checkpoints
+*.pt
+*.pth
+*.onnx
+*.gguf
+
+# Secrets
+.env
+*.env
+
+# Editors / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db

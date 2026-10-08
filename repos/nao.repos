@@ -1,0 +1,6 @@
+# NAO (nao_attention_actuation)
+repositories:
+  third_party/nao_lola:
+    type: git
+    url: https://github.com/geriabot/nao_lola.git
+    version: rolling

@@ -1,0 +1,5 @@
+# TurtleBot 4 (tb4_attention_actuation)
+# Nothing to build from source: the TurtleBot 4 and nav2_minimal_tb4_sim packages are
+# installed as binaries (apt: ros-jazzy-turtlebot4-desktop ros-jazzy-nav2-minimal-tb4-sim
+# ros-jazzy-topic-tools, or the pixi "tb4" environment).
+repositories: {}

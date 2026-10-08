@@ -1,23 +1,19 @@
+# Dependencies common to every robot. Robot-specific dependencies are in repos/<robot>.repos
 repositories:
+  # llm_router (llama_msgs) and the local MLLM backend
   third_party/llama_ros:
     type: git
     url: https://github.com/mgonzs13/llama_ros.git
     version: main
 
-  # attention_system
+  # attention_system (its own dependencies are in behavior_architecture/thirdparty.repos)
   third_party/behavior_architecture:
     type: git
     url: https://github.com/geriabot/behavior_architecture.git
     version: main
-  
-  # kobuki_attention_actuation
-  third_party/kobuki:
+
+  # attention_system_interfaces, attention_actuation_msgs (yolo_msgs)
+  third_party/yolo_ros:
     type: git
-    url: https://github.com/IntelligentRoboticsLabs/kobuki.git
-    version: jazzy
-  
-  # nao_attention_actuation
-  third_party/nao_lola:
-    type: git
-    url: https://github.com/geriabot/nao_lola.git
-    version: rolling
+    url: https://github.com/mgonzs13/yolo_ros.git
+    version: main
