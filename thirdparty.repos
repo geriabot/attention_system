@@ -4,6 +4,12 @@ repositories:
     url: https://github.com/mgonzs13/llama_ros.git
     version: main
 
+  # attention_system_interfaces, attention_actuation_msgs (yolo_msgs)
+  third_party/yolo_ros:
+    type: git
+    url: https://github.com/mgonzs13/yolo_ros.git
+    version: main
+
   # attention_system
   third_party/behavior_architecture:
     type: git

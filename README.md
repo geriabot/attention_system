@@ -130,23 +130,28 @@ Install dependencies:
 cd <path_to_workspace>/<workspace>/src
 
 # General dependencies
-vcs import . < attention_system/thirdparty.repos
+vcs import --recursive . < attention_system/thirdparty.repos
+
+# Dependencies of behavior_architecture and kobuki (kobuki brings astra_camera_msgs,
+# needed by attention_aux_perception_nodes)
+vcs import third_party < third_party/behavior_architecture/thirdparty.repos
+vcs import third_party < third_party/kobuki/thirdparty.repos
 
 # Dependencies used only by google_gemini_bridge_cpp
 cd attention_system/llm_management/gemini_bridge/google_gemini_bridge_cpp/
 vcs import . < thirdparty.repos
 
 # Third-party dependency installation
-cd <path_to_workspace>/<workspace>/src
+cd <path_to_workspace>/<workspace>
 source /opt/ros/jazzy/setup.bash
 rosdep install --from-paths src --ignore-src -r -y
 ```
 
 Build the workspace:
-> When building the `llama_ros` package, if the `CUDA` GPU accelerator is going to be used for inference, the build must be run with the `DGGML_CUDA=ON` flag.
+> When building the `llama_ros` package, if the `CUDA` GPU accelerator is going to be used for inference, the build must be run with the `-DGGML_CUDA=ON` flag.
 ```sh
 cd <path_to_workspace>/<workspace>
-source ~/scripts/ros2/source_jazzy.sh
+source /opt/ros/jazzy/setup.bash
 
 # Without CUDA for llama_ros
 colcon build --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
