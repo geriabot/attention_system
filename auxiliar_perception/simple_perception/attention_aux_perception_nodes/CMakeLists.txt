@@ -46,7 +46,6 @@ set(dependencies
 include_directories(include)
 
 add_library(${PROJECT_NAME} SHARED
-  src/${PROJECT_NAME}/Detection3dProjector.cpp
   src/${PROJECT_NAME}/Detection3dProjectorNoDepht.cpp
   src/${PROJECT_NAME}/Detection3dProjectorAstraDepht.cpp
   src/${PROJECT_NAME}/Detection3dProjectorRgbdDepth.cpp
@@ -55,10 +54,6 @@ add_library(${PROJECT_NAME} SHARED
 )
 
 ament_target_dependencies(${PROJECT_NAME} ${dependencies})
-
-add_executable(detection_3d_projector_node src/detection_3d_projector_node.cpp)
-ament_target_dependencies(detection_3d_projector_node ${dependencies})
-target_link_libraries(detection_3d_projector_node ${PROJECT_NAME})
 
 add_executable(detection_3d_projector_no_depht_node src/detection_3d_projector_no_depht_node.cpp)
 ament_target_dependencies(detection_3d_projector_no_depht_node ${dependencies})
@@ -81,7 +76,6 @@ ament_target_dependencies(pub_n_detections_same_class_tf_node ${dependencies})
 target_link_libraries(pub_n_detections_same_class_tf_node ${PROJECT_NAME})
 
 install(TARGETS
-  detection_3d_projector_node
   detection_3d_projector_no_depht_node
   detection_3d_projector_astra_depht_node
   detection_3d_projector_rgbd_depth_node
