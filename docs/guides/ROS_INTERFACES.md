@@ -44,7 +44,7 @@ The capability flags are matched against the configured `actuation_capabilities_
 | `/gemini_bridge_service` | Service | `gemini_bridge_interfaces/srv/GetGeminiResponse` | `/gemini_bridge` from `google_gemini_bridge_cpp` | Remote Gemini backend used when `llm_router` runs with `mode:=remote-gemini`. |
 | `/llama/generate_response` | Action | `llama_msgs/action/GenerateResponse` | `llama_ros` | Local backend used when `llm_router` runs with `mode:=local`. |
 
-The Gemini bridge requires the `GOOGLE_GEMINI_API_KEY` environment variable before starting `gemini_bridge_node`.
+The Gemini bridge reads the API key from the environment when `gemini_bridge_node` starts, checking `GOOGLE_GEMINI_API_KEY` (legacy), `GEMINI_API_KEY` and `GOOGLE_API_KEY`, in this order.
 
 ## Attention actuation
 

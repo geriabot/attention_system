@@ -65,7 +65,7 @@ When using perception behaviors, `/omdet_node` must be configured and active bef
 | Symptom | Likely cause | Check | Fix |
 | ------- | ------------ | ----- | --- |
 | `/ask_llm` is missing | `llm_router` is not running or not sourced | `ros2 service list` | Start `ros2 run llm_router llm_router --ros-args -p mode:=<local/remote-gemini>`. |
-| Gemini backend does not answer | `GOOGLE_GEMINI_API_KEY` is missing or invalid | Check the terminal that launched `gemini_bridge_node` | Export `GOOGLE_GEMINI_API_KEY` before starting the node. |
+| Gemini backend does not answer | The API key is missing or invalid | Check the terminal that launched `gemini_bridge_node` (it logs which variable the key was read from) | Export `GEMINI_API_KEY` (or `GOOGLE_API_KEY`) before starting the node. |
 | Local MLLM backend does not answer | `llama_ros` action is not running | `ros2 action list` | Start `ros2 llama launch <path_to_model_yaml_file>`. TODO: Add a validated local model YAML path. |
 | Behavior Tree plugin cannot be loaded | Plugin library was not built or workspace was not sourced | Check launch output and `install/` setup sourcing | Rebuild affected packages and source `install/setup.bash`. |
 | `/use_attention` returns no available behavior | Capability flags do not satisfy any behavior | Inspect `attention_orchestrator_params.yaml` | Set `can_turn_around`, `can_move_around` or `can_use_joint` according to the requested behavior. |
