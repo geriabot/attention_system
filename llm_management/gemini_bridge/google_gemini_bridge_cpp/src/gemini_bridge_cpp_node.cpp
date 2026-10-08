@@ -7,7 +7,9 @@ int main(int argc, char *argv[])
   auto node = std::make_shared<gemini_testing::GeminiBridge>();
 
   if (!node->init_gemini_client_service()) {
-    RCLCPP_ERROR(node->get_logger(), "No Gemini API key");
+    RCLCPP_ERROR(
+      node->get_logger(),
+      "No Gemini API key: set GEMINI_API_KEY (or GOOGLE_API_KEY / GOOGLE_GEMINI_API_KEY)");
     return 0;
   }
 

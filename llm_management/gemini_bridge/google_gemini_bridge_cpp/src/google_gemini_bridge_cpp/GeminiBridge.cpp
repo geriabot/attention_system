@@ -41,12 +41,20 @@ GeminiBridge::GeminiBridge()
 bool
 GeminiBridge::init_gemini_client_service()
 {
-  const char* api_key_value = std::getenv("GOOGLE_GEMINI_API_KEY");
-  if (api_key_value == nullptr) {
-    return false;
+  // GEMINI_API_KEY and GOOGLE_API_KEY are the variables used by the Google GenAI SDKs;
+  // GOOGLE_GEMINI_API_KEY is kept for backwards compatibility
+  for (const char * env_var : API_KEY_ENV_VARS) {
+    const char * api_key_value = std::getenv(env_var);
+    if (api_key_value != nullptr && api_key_value[0] != '\0') {
+      api_key_ = std::string(api_key_value);
+      RCLCPP_INFO(this->get_logger(), "Using the Gemini API key from %s", env_var);
+      break;
+    }
   }
 
-  api_key_ = std::string(api_key_value);
+  if (api_key_.empty()) {
+    return false;
+  }
 
   service_ = this->create_service<gemini_bridge_interfaces::srv::GetGeminiResponse>(
     "gemini_bridge_service",
@@ -76,8 +84,6 @@ GeminiBridge::ask_gemini(
 
     std::string http_response;
     std::string img_buffer;
-
-    RCLCPP_INFO(this->get_logger(), "KEY: %s", api_key_.c_str());
 
     if (request->uses_image) {
       http_response = make_prompt_request(request->prompt,

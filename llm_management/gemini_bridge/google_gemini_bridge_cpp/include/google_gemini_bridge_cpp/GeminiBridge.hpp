@@ -56,6 +56,9 @@ private:
 
   const int JPEG_ENCODING_QUALITY = 95;
   const std::string BASE_URL = "https://generativelanguage.googleapis.com";
+  // Environment variables checked, in order, for the Gemini API key
+  static constexpr const char * API_KEY_ENV_VARS[] = {
+    "GOOGLE_GEMINI_API_KEY", "GEMINI_API_KEY", "GOOGLE_API_KEY"};
   const std::string MIME_TYPE = "image/jpeg";
   const std::string IMG_NAME_PREFIX = "prompt_image_";
 };
