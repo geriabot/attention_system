@@ -9,7 +9,6 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <depend>astra_camera_msgs</depend>
   <depend>rclcpp</depend>
   <depend>vision_msgs</depend>
   <depend>sensor_msgs</depend>

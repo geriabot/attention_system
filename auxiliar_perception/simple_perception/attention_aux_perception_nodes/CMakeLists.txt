@@ -7,7 +7,7 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
-find_package(astra_camera_msgs REQUIRED)
+find_package(astra_camera_msgs QUIET)
 find_package(rclcpp REQUIRED)
 find_package(vision_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
@@ -27,7 +27,6 @@ set(CMAKE_CXX_STANDARD 17)
 
 set(dependencies
   ament_cmake
-  astra_camera_msgs
   rclcpp
   vision_msgs
   sensor_msgs
@@ -43,30 +42,36 @@ set(dependencies
   std_srvs
 )
 
+# The Astra projector is only built when astra_camera_msgs is available
+if(astra_camera_msgs_FOUND)
+  list(APPEND dependencies astra_camera_msgs)
+endif()
+
 include_directories(include)
 
 add_library(${PROJECT_NAME} SHARED
-  src/${PROJECT_NAME}/Detection3dProjector.cpp
   src/${PROJECT_NAME}/Detection3dProjectorNoDepht.cpp
-  src/${PROJECT_NAME}/Detection3dProjectorAstraDepht.cpp
   src/${PROJECT_NAME}/Detection3dProjectorRgbdDepth.cpp
   src/${PROJECT_NAME}/PubSingleDetectionTF.cpp
   src/${PROJECT_NAME}/PubNDetectionsSameClassTF.cpp
 )
 
-ament_target_dependencies(${PROJECT_NAME} ${dependencies})
+if(astra_camera_msgs_FOUND)
+  target_sources(${PROJECT_NAME} PRIVATE src/${PROJECT_NAME}/Detection3dProjectorAstraDepht.cpp)
+endif()
 
-add_executable(detection_3d_projector_node src/detection_3d_projector_node.cpp)
-ament_target_dependencies(detection_3d_projector_node ${dependencies})
-target_link_libraries(detection_3d_projector_node ${PROJECT_NAME})
+ament_target_dependencies(${PROJECT_NAME} ${dependencies})
 
 add_executable(detection_3d_projector_no_depht_node src/detection_3d_projector_no_depht_node.cpp)
 ament_target_dependencies(detection_3d_projector_no_depht_node ${dependencies})
 target_link_libraries(detection_3d_projector_no_depht_node ${PROJECT_NAME})
 
-add_executable(detection_3d_projector_astra_depht_node src/detection_3d_projector_astra_depht_node.cpp)
-ament_target_dependencies(detection_3d_projector_astra_depht_node ${dependencies})
-target_link_libraries(detection_3d_projector_astra_depht_node ${PROJECT_NAME})
+if(astra_camera_msgs_FOUND)
+  add_executable(detection_3d_projector_astra_depht_node src/detection_3d_projector_astra_depht_node.cpp)
+  ament_target_dependencies(detection_3d_projector_astra_depht_node ${dependencies})
+  target_link_libraries(detection_3d_projector_astra_depht_node ${PROJECT_NAME})
+  install(TARGETS detection_3d_projector_astra_depht_node DESTINATION lib/${PROJECT_NAME})
+endif()
 
 add_executable(detection_3d_projector_rgbd_depth_node src/detection_3d_projector_rgbd_depth_node.cpp)
 ament_target_dependencies(detection_3d_projector_rgbd_depth_node ${dependencies})
@@ -81,9 +86,7 @@ ament_target_dependencies(pub_n_detections_same_class_tf_node ${dependencies})
 target_link_libraries(pub_n_detections_same_class_tf_node ${PROJECT_NAME})
 
 install(TARGETS
-  detection_3d_projector_node
   detection_3d_projector_no_depht_node
-  detection_3d_projector_astra_depht_node
   detection_3d_projector_rgbd_depth_node
   pub_single_detection_tf_node
   pub_n_detections_same_class_tf_node
